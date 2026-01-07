@@ -3,7 +3,6 @@ import Header from './components/Header';
 import ChatHistory from './components/ChatHistory';
 import ChatMessage from './components/ChatMessage';
 import ChatInput from './components/ChatInput';
-import DatabaseViewer from './components/DatabaseViewer';
 import { sendMessage } from './services/api';
 
 const STORAGE_KEY = 'rupay_chat_history';
@@ -46,7 +45,7 @@ function App() {
             id: Date.now().toString(),
             timestamp: Date.now(),
             messages: [
-                { role: 'assistant', content: 'Hello! I am your RuPay Transaction Assistant. How can I help you today?' }
+                { role: 'assistant', content: 'Hello! I am RuPay Agent, your AI-powered transaction assistant. How can I help you today?' }
             ]
         };
         setChats(prev => [newChat, ...prev]);
@@ -135,7 +134,7 @@ function App() {
                         <ChatInput onSend={handleSendMessage} disabled={loading} />
                     </div>
                 </div>
-                <DatabaseViewer />
+
             </div>
         </>
     );

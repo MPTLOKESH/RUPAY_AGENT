@@ -73,13 +73,13 @@ class TransactionAgent:
             max_amount = amt_val * 1.2  # +20%
 
             # --- Logic: SQL Query Template ---
-            # NOTE: Using 'transactions' table (Correct Docker Table Name)
+            # NOTE: Using 'transactions' table with NEW columns
             query_str = """
                 SELECT * FROM transactions 
-                WHERE amount BETWEEN :min_amt AND :max_amt
+                WHERE amt BETWEEN :min_amt AND :max_amt
                 AND card_number LIKE :card_pattern
-                AND date_and_time BETWEEN :start_dt AND :end_dt
-                ORDER BY date_and_time DESC
+                AND tstamp_trans BETWEEN :start_dt AND :end_dt
+                ORDER BY tstamp_trans DESC
                 LIMIT 1
             """
             
@@ -92,7 +92,6 @@ class TransactionAgent:
             row = None
             with self.engine.connect() as conn:
                 # --- Attempt 1: Specific Window (+/- 2 Hours) ---
-                # This handles "around 10:30 PM"
                 start_window = user_dt - timedelta(hours=2)
                 end_window = user_dt + timedelta(hours=2)
                 
@@ -101,11 +100,8 @@ class TransactionAgent:
                 row = result.fetchone()
 
                 # --- Attempt 2: Whole Day Fallback ---
-                # If specific time fails, check the ENTIRE DAY given by the user.
-                # Use cases: User says "12 AM" (00:00) but txn is at 11 PM.
                 if not row:
                     print(f"[TxAgent] Specific window {start_window}-{end_window} failed. Trying Whole Day...")
-                    # Set to 00:00:00 to 23:59:59 of the parsed date
                     day_start = user_dt.replace(hour=0, minute=0, second=0, microsecond=0)
                     day_end = user_dt.replace(hour=23, minute=59, second=59, microsecond=999999)
                     
@@ -114,13 +110,10 @@ class TransactionAgent:
                     row = result.fetchone()
 
                 # --- Attempt 3: +/- 12 Hours Flip (Legacy Logic) ---
-                # Handles AM/PM confusion if day search also failed (unlikely but safe to keep)
                 if not row:
-                     # Flip time by 12 hours (e.g., 12:32 PM -> 12:32 AM)
                     alt_start = start_window + timedelta(hours=12)
                     alt_end = end_window + timedelta(hours=12)
                     
-                    # Ensure we are checking a diff time frame than Attempt 1
                     params3 = {**common_params, "start_dt": alt_start, "end_dt": alt_end}
                     result = conn.execute(text(query_str), params3)
                     row = result.fetchone()
@@ -130,11 +123,12 @@ class TransactionAgent:
                 return json.dumps({"response_code": "91", "description": "No transaction found."})
 
             # Get Description
-            description = self._get_desc(row.response_code)
+            # Mapped response_code -> reason_code (new column)
+            description = self._get_desc(row.reason_code)
 
             return json.dumps({
-                "date": str(row.date_and_time),
-                "amount": int(row.amount)
+                "date": str(row.tstamp_trans),
+                "amount": int(row.amt)
             })
 
         except Exception as e:

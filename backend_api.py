@@ -76,17 +76,20 @@ async def get_database():
         engine = create_engine(db_url)
         with engine.connect() as conn:
             # Fetch last 15 transactions
-            query = "SELECT * FROM transactions ORDER BY date_and_time DESC LIMIT 15"
+            query = "SELECT * FROM transactions ORDER BY tstamp_trans DESC LIMIT 15"
             df = pd.read_sql(query, conn)
         
         # Convert DataFrame to list of dictionaries
         data = df.to_dict('records')
         
-        # Convert datetime objects to strings
+        # Convert datetime objects to strings and map keys for frontend
         for record in data:
-            if 'date_and_time' in record:
-                record['date_and_time'] = str(record['date_and_time'])
-        
+            if 'tstamp_trans' in record:
+                record['date_and_time'] = str(record['tstamp_trans'])
+            
+            if 'amt' in record:
+                record['amount'] = record['amt']
+                
         return DatabaseResponse(data=data)
     
     except Exception as e:

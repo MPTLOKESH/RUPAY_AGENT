@@ -14,11 +14,9 @@ db_url = f"postgresql://{DB_CONFIG['user']}:{DB_CONFIG['password']}@{DB_CONFIG['
 
 try:
     engine = create_engine(db_url)
-    # Search for any transaction with this card suffix
-    query = "SELECT * FROM transactions WHERE card_number LIKE '%%2537' LIMIT 5"
-    df = pd.read_sql(query, engine)
-    
-    print(f"Found {len(df)} transactions for card *2537:")
-    print(df.to_string())
+    # Fetch one row
+    df = pd.read_sql("SELECT * FROM transactions LIMIT 1", engine)
+    print("SAMPLE ROW:")
+    print(df.iloc[0].to_dict())
 except Exception as e:
-    print(f"Error querying DB: {e}")
+    print(f"Error: {e}")
