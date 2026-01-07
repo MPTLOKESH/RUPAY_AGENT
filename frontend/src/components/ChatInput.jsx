@@ -23,7 +23,6 @@ function ChatInput({ onSend, disabled }) {
             />
             <button type="submit" className="send-button" disabled={disabled || !input.trim()}>
                 Send
-                <span>Send</span>
             </button>
         </form>
     );

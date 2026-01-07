@@ -5,6 +5,7 @@ function DatabaseViewer() {
     const [data, setData] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
+    const [isMaximized, setIsMaximized] = useState(false);
 
     const handleRefresh = async () => {
         setLoading(true);
@@ -24,19 +25,28 @@ function DatabaseViewer() {
     }, []);
 
     return (
-        <div className="sidebar">
+        <div className={`sidebar ${isMaximized ? 'maximized' : ''}`}>
             <div className="sidebar-header">
                 <div className="sidebar-title">
                     <span>📊</span>
                     Live Database
                 </div>
-                <button
-                    onClick={handleRefresh}
-                    className={`refresh-button ${loading ? 'loading' : ''}`}
-                    disabled={loading}
-                >
-                    Refresh
-                </button>
+                <div className="sidebar-actions">
+                    <button
+                        onClick={() => setIsMaximized(!isMaximized)}
+                        className="maximize-button"
+                        title={isMaximized ? 'Minimize' : 'Maximize'}
+                    >
+                        {isMaximized ? '◧' : '⛶'}
+                    </button>
+                    <button
+                        onClick={handleRefresh}
+                        className={`refresh-button ${loading ? 'loading' : ''}`}
+                        disabled={loading}
+                    >
+                        Refresh
+                    </button>
+                </div>
             </div>
 
             <div className="sidebar-content">
