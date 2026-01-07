@@ -1,0 +1,223 @@
+[
+    {
+        "scenario_name": "Transaction Approved",
+        "description": "The transaction was successfully authenticated and authorized by the Issuer Bank.",
+        "system_behavior": "The card details, PIN/OTP were verified, and the account had sufficient balance. The Issuer approved the debit.",
+        "technical_details": {
+            "Error Code": "00",
+            "Resp Code": "00",
+            "Response Desc": "APPROVED / SUCCESSFUL",
+            "Decline Type": "Approved",
+            "Decline Responsibility": "Issuer"
+        },
+        "agent_message": "“Your RuPay transaction was successful.”",
+        "user_scenarios": []
+    },
+    {
+        "scenario_name": "Insufficient Funds",
+        "description": "The transaction was declined because the account balance is lower than the transaction amount.",
+        "system_behavior": "The Issuer Bank checked the account ledger and determined the available balance was insufficient to cover the purchase or withdrawal.",
+        "technical_details": {
+            "Error Code": "51",
+            "Resp Code": "51",
+            "Response Desc": "INSUFFICIENT FUNDS",
+            "Decline Type": "Business Decline",
+            "Decline Responsibility": "Issuer"
+        },
+        "agent_message": "“The transaction was declined due to insufficient funds. Please check your account balance.”",
+        "user_scenarios": [
+            {
+                "#": "1",
+                "Scenario": "User unsure of balance",
+                "User Statement (Intent)": "“I thought I had enough money.”",
+                "Suggested Agent Response": "“The bank's records show the balance is lower than the requested amount. Please check your balance via SMS or Net Banking.”"
+            },
+            {
+                "#": "2",
+                "Scenario": "Minimum balance hold",
+                "User Statement (Intent)": "“I have exactly 500 rupees, why can't I spend it?”",
+                "Suggested Agent Response": "“Your bank might have a minimum balance requirement that cannot be withdrawn. Try a smaller amount.”"
+            }
+        ]
+    },
+    {
+        "scenario_name": "Incorrect PIN",
+        "description": "The transaction failed because the user entered the wrong Personal Identification Number (PIN).",
+        "system_behavior": "The PIN block sent in the transaction message did not match the PIN stored in the Issuer's security module (HSM).",
+        "technical_details": {
+            "Error Code": "55",
+            "Resp Code": "55",
+            "Response Desc": "INCORRECT PIN",
+            "Decline Type": "Business Decline",
+            "Decline Responsibility": "Issuer"
+        },
+        "agent_message": "“The PIN entered is incorrect. Please retry with the correct PIN. Note that 3 consecutive wrong attempts will block your card.”",
+        "user_scenarios": [
+            {
+                "#": "1",
+                "Scenario": "Typo / Memory lapse",
+                "User Statement (Intent)": "“I entered the right PIN, but it failed.”",
+                "Suggested Agent Response": "“It is possible there was a typing error. Please try again carefully. Do not guess if you are unsure.”"
+            },
+            {
+                "#": "2",
+                "Scenario": "Card Block Warning",
+                "User Statement (Intent)": "“Can I try again?”",
+                "Suggested Agent Response": "“Yes, but be careful. If you enter the wrong PIN 3 times in a row, the card will be blocked for 24 hours.”"
+            }
+        ]
+    },
+    {
+        "scenario_name": "Expired Card",
+        "description": "The transaction failed because the physical RuPay card has passed its expiry date.",
+        "system_behavior": "The 'Expiry Date' field in the transaction message is earlier than the current system date.",
+        "technical_details": {
+            "Error Code": "54",
+            "Resp Code": "54",
+            "Response Desc": "EXPIRED CARD",
+            "Decline Type": "Business Decline",
+            "Decline Responsibility": "Issuer"
+        },
+        "agent_message": "“Your RuPay card has expired. Please contact your bank branch to get a new card issued.”",
+        "user_scenarios": [
+            {
+                "#": "1",
+                "Scenario": "Old card usage",
+                "User Statement (Intent)": "“My card looks fine, why did it fail?”",
+                "Suggested Agent Response": "“Please check the 'Valid Thru' date printed on the front of your card. If that date has passed, the card is no longer active.”"
+            }
+        ]
+    },
+    {
+        "scenario_name": "Exceeds Withdrawal Amount Limit",
+        "description": "The transaction amount is higher than the single-transaction limit set for this card variant.",
+        "system_behavior": "The requested amount exceeds the velocity limit parameter configured for this specific card product (e.g., Classic vs Platinum).",
+        "technical_details": {
+            "Error Code": "61",
+            "Resp Code": "61",
+            "Response Desc": "EXCEEDS WITHDRAWAL AMOUNT LIMIT",
+            "Decline Type": "Business Decline",
+            "Decline Responsibility": "Issuer"
+        },
+        "agent_message": "“The amount requested exceeds the limit allowed for your card type. Please try a smaller amount.”",
+        "user_scenarios": [
+            {
+                "#": "1",
+                "Scenario": "High value purchase/withdrawal",
+                "User Statement (Intent)": "“I am trying to buy a TV for ₹50,000.”",
+                "Suggested Agent Response": "“Your card might have a per-transaction limit (e.g., ₹25,000). You may need to split the payment or upgrade your card.”"
+            }
+        ]
+    },
+    {
+        "scenario_name": "Issuer Switch Inoperative",
+        "description": "The transaction failed because the Issuer Bank's system is down or not responding.",
+        "system_behavior": "The RuPay network could not get a response from the Issuer Bank within the timeout period.",
+        "technical_details": {
+            "Error Code": "91",
+            "Resp Code": "91",
+            "Response Desc": "ISSUER SWITCH INOPERATIVE",
+            "Decline Type": "Technical Decline",
+            "Decline Responsibility": "Issuer"
+        },
+        "agent_message": "“Your bank’s system is temporarily unavailable. Please try the transaction again later.”",
+        "user_scenarios": [
+            {
+                "#": "1",
+                "Scenario": "Bank server down",
+                "User Statement (Intent)": "“Why is the ATM saying 'Issuer Down'?”",
+                "Suggested Agent Response": "“This means your bank's server is offline right now. It is a temporary technical issue.”"
+            }
+        ]
+    },
+    {
+        "scenario_name": "Lost or Stolen Card (Hotlisted)",
+        "description": "The transaction was attempted on a card that has been reported as lost or stolen.",
+        "system_behavior": "The Issuer Bank's database flags this card number as 'Hotlisted'. The system declines the transaction and may send a 'Capture Card' instruction.",
+        "technical_details": {
+            "Error Code": "41",
+            "Resp Code": "41",
+            "Response Desc": "LOST CARD / PICK UP",
+            "Decline Type": "Security Decline",
+            "Decline Responsibility": "Issuer"
+        },
+        "agent_message": "“This transaction is declined because the card is reported as lost. Please contact your bank immediately.”",
+        "user_scenarios": [
+            {
+                "#": "1",
+                "Scenario": "Recovered lost card",
+                "User Statement (Intent)": "“I found my old card and tried to use it.”",
+                "Suggested Agent Response": "“Once a card is reported lost, it is permanently blocked for security. You must use the new card sent by the bank.”"
+            }
+        ]
+    },
+    {
+        "scenario_name": "Function Not Supported (Restricted Card)",
+        "description": "The specific type of transaction is not allowed for this card (e.g., International usage on a domestic card).",
+        "system_behavior": "The card is valid, but the 'Transaction Code' (e.g., International POS) is restricted by the Issuer's card parameters.",
+        "technical_details": {
+            "Error Code": "62",
+            "Resp Code": "62",
+            "Response Desc": "RESTRICTED CARD / FUNCTION NOT SUPPORTED",
+            "Decline Type": "Business Decline",
+            "Decline Responsibility": "Issuer"
+        },
+        "agent_message": "“This transaction type is not supported or enabled for your card. Please check your card settings.”",
+        "user_scenarios": [
+            {
+                "#": "1",
+                "Scenario": "International usage",
+                "User Statement (Intent)": "“I am in London and my RuPay card isn't working.”",
+                "Suggested Agent Response": "“Unless you have a RuPay Global card with International usage enabled, it will only work within India.”"
+            },
+            {
+                "#": "2",
+                "Scenario": "Online transaction disabled",
+                "User Statement (Intent)": "“I can't pay on Amazon.”",
+                "Suggested Agent Response": "“You may need to enable 'E-commerce' transactions via your Mobile Banking app.”"
+            }
+        ]
+    },
+    {
+        "scenario_name": "Do Not Honor (Generic Decline)",
+        "description": "The Issuer Bank declined the transaction without sharing a specific reason.",
+        "system_behavior": "A catch-all decline code used when the bank refuses the transaction due to internal policies or unclassified risk checks.",
+        "technical_details": {
+            "Error Code": "05",
+            "Resp Code": "05",
+            "Response Desc": "DO NOT HONOR",
+            "Decline Type": "Business Decline",
+            "Decline Responsibility": "Issuer"
+        },
+        "agent_message": "“The transaction was declined by your bank. Please contact your branch for more details.”",
+        "user_scenarios": [
+            {
+                "#": "1",
+                "Scenario": "Unexplained failure",
+                "User Statement (Intent)": "“My card is new and has money, why 'Do Not Honor'?”",
+                "Suggested Agent Response": "“This is a general decline from the bank. It could be due to a security flag or a temporary restriction on the card.”"
+            }
+        ]
+    },
+    {
+        "scenario_name": "Suspected Fraud",
+        "description": "The bank's risk monitoring system flagged the transaction as suspicious.",
+        "system_behavior": "The Fraud Monitoring System (FMS) triggered a rule (e.g., unusual location, high velocity) and blocked the transaction.",
+        "technical_details": {
+            "Error Code": "59",
+            "Resp Code": "59",
+            "Response Desc": "SUSPECTED FRAUD",
+            "Decline Type": "Security Decline",
+            "Decline Responsibility": "Issuer"
+        },
+        "agent_message": "“The transaction was declined for security reasons. Please call your bank to verify your identity.”",
+        "user_scenarios": [
+            {
+                "#": "1",
+                "Scenario": "Unusual spending pattern",
+                "User Statement (Intent)": "“I am buying jewelry and it failed.”",
+                "Suggested Agent Response": "“Large, unusual transactions often trigger security blocks. You may receive a call from the bank to verify it's you.”"
+            }
+        ]
+    }
+]

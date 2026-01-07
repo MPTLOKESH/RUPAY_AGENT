@@ -1,0 +1,398 @@
+[
+  {
+    "conversation_id": "RUPAY_51_a7ba3478",
+    "messages": [
+      {
+        "role": "user",
+        "content": "I just tried to swipe my RuPay card at a grocery store and it got declined. This is embarrassing. What happened?"
+      },
+      {
+        "role": "assistant",
+        "content": "I’m sorry you faced this situation. Could you please share the date and approximate time of the transaction, the amount you tried to pay, and the last four digits of your card number?"
+      },
+      {
+        "role": "user",
+        "content": "It was today, 2025-04-20, around 18:30. The bill was ₹2,500 and my card ends with 4455."
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "3u4XaEG6l",
+            "type": "function",
+            "function": {
+              "name": "get_transaction_details",
+              "arguments": "{\"date\":\"2025-04-20\",\"approx_time\":\"18:30\",\"amount\":2500,\"card_last_4\":\"4455\"}"
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "3u4XaEG6l",
+        "content": "{\"rrn\": \"051096574160\", \"amount\": 2500, \"bank_name\": \"HDFC Bank\", \"merchant\": \"Reliance Smart\", \"datetime\": \"2025-04-20 18:30:00\", \"response_code\": \"51\", \"transaction_type\": \"POS Purchase\", \"description\": \"Insufficient Funds\"}"
+      },
+      {
+        "role": "assistant",
+        "content": "Thank you for the details. The transaction was declined by your bank due to **Insufficient Funds**. It appears the account linked to your card did not have enough balance to cover the ₹2,500 purchase at that moment. You may want to check your balance via your banking app."
+      },
+      {
+        "role": "user",
+        "content": "Oh, I thought I had enough. Was any money deducted for a failed swipe?"
+      },
+      {
+        "role": "assistant",
+        "content": "No, since the transaction was declined due to low balance, no money was deducted from your account. Your remaining balance is safe. You can add funds to your account and try again, or use a different payment method."
+      },
+      {
+        "role": "user",
+        "content": "Okay, I'll check my app. Thanks."
+      },
+      {
+        "role": "assistant",
+        "content": "You’re welcome!  If you have any other questions, feel free to ask. Have a good evening."
+      }
+    ],
+    "metadata": {
+      "Topic": "RuPay_Transaction_Failure",
+      "Scenario": "Insufficient Funds",
+      "current_date": [
+        "2025-04-20"
+      ],
+      "current_time": [
+        "18:35:00"
+      ]
+    }
+  },
+  {
+    "conversation_id": "RUPAY_55_64e2e7f4",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Hi, I tried to withdraw cash from an ATM just now and it said Incorrect PIN. I'm sure I typed it right."
+      },
+      {
+        "role": "assistant",
+        "content": "I understand your concern. To verify this, could you please share the date and approximate time of the withdrawal, the amount, and the last four digits of the card you used?"
+      },
+      {
+        "role": "user",
+        "content": "It was today, 2025-02-07 at 10:15 AM. I tried to take out ₹500. Card ends in 1234."
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "eNaBdNCGj",
+            "type": "function",
+            "function": {
+              "name": "get_transaction_details",
+              "arguments": "{\"date\":\"2025-02-07\",\"approx_time\":\"10:15\",\"amount\":500,\"card_last_4\":\"1234\"}"
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "eNaBdNCGj",
+        "content": "{\"rrn\": \"683340584978\", \"amount\": 500, \"bank_name\": \"State Bank of India\", \"merchant\": \"SBI ATM\", \"datetime\": \"2025-02-07 10:15:00\", \"response_code\": \"55\", \"transaction_type\": \"Cash Withdrawal\", \"description\": \"Incorrect PIN\"}"
+      },
+      {
+        "role": "assistant",
+        "content": "The bank records confirm that the transaction failed because of an **Incorrect PIN**. It's possible there was a typing error on the keypad. Please be careful, as entering the wrong PIN three consecutive times will temporarily block your card for security reasons."
+      },
+      {
+        "role": "user",
+        "content": "I see. Can I try again right now?"
+      },
+      {
+        "role": "assistant",
+        "content": "Yes, if your card isn't blocked yet, you can try again immediately. Please ensure you enter the 4-digit PIN carefully. If you have forgotten it, you can reset it using your bank's mobile app or at the ATM using the 'Forgot PIN' option."
+      },
+      {
+        "role": "user",
+        "content": "Okay, I will try carefully this time. Thanks."
+      },
+      {
+        "role": "assistant",
+        "content": "You’re welcome! Good luck."
+      }
+    ],
+    "metadata": {
+      "Topic": "RuPay_Transaction_Failure",
+      "Scenario": "Incorrect PIN",
+      "current_date": [
+        "2025-02-07"
+      ],
+      "current_time": [
+        "10:20:00"
+      ]
+    }
+  },
+  {
+    "conversation_id": "RUPAY_91_8ab62d59",
+    "messages": [
+      {
+        "role": "user",
+        "content": "I'm trying to buy a flight ticket online with my RuPay card but it keeps failing. It says something about the issuer."
+      },
+      {
+        "role": "assistant",
+        "content": "I can help check that for you. Could you please provide the date and time of the attempt, the transaction amount, and the last four digits of your card?"
+      },
+      {
+        "role": "user",
+        "content": "Just now, 2025-08-31 at 15:06. The ticket is ₹4,500. Card number ends in 9988."
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "iivMB7IP1",
+            "type": "function",
+            "function": {
+              "name": "get_transaction_details",
+              "arguments": "{\"date\":\"2025-08-31\",\"approx_time\":\"15:06\",\"amount\":4500,\"card_last_4\":\"9988\"}"
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "iivMB7IP1",
+        "content": "{\"rrn\": \"999911649316\", \"amount\": 4500, \"bank_name\": \"Punjab National Bank\", \"merchant\": \"Indigo Airlines\", \"datetime\": \"2025-08-31 15:06:00\", \"response_code\": \"91\", \"transaction_type\": \"E-commerce\", \"description\": \"Issuer Switch Inoperative\"}"
+      },
+      {
+        "role": "assistant",
+        "content": "The transaction failed with the error **Issuer Switch Inoperative**. This means your bank's (Punjab National Bank) system is currently down or experiencing high traffic. It is a temporary technical issue on the bank's side."
+      },
+      {
+        "role": "user",
+        "content": "That's annoying. Should I try a different card?"
+      },
+      {
+        "role": "assistant",
+        "content": "Yes, if you have a card from a different bank, I would recommend using that to book your ticket immediately. If you want to use the same card, you might need to wait for 30-60 minutes for the bank's system to come back online."
+      },
+      {
+        "role": "user",
+        "content": "I'll use my wife's card then. Thanks."
+      },
+      {
+        "role": "assistant",
+        "content": "You're welcome. Have a safe flight!"
+      }
+    ],
+    "metadata": {
+      "Topic": "RuPay_Transaction_Failure",
+      "Scenario": "Issuer Switch Inoperative",
+      "current_date": [
+        "2025-08-31"
+      ],
+      "current_time": [
+        "15:10:00"
+      ]
+    }
+  },
+  {
+    "conversation_id": "RUPAY_61_edda468f",
+    "messages": [
+      {
+        "role": "user",
+        "content": "I tried to withdraw ₹40,000 from the ATM but it declined. I have enough balance, so why did it stop me?"
+      },
+      {
+        "role": "assistant",
+        "content": "Let's investigate. Please share the date and time of the withdrawal, the exact amount, and the last 4 digits of your RuPay card."
+      },
+      {
+        "role": "user",
+        "content": "It was on 2025-03-20, around 09:24 AM. Amount ₹40,000. Card ending 7766."
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "xr0aVz5os",
+            "type": "function",
+            "function": {
+              "name": "get_transaction_details",
+              "arguments": "{\"date\":\"2025-03-20\",\"approx_time\":\"09:24\",\"amount\":40000,\"card_last_4\":\"7766\"}"
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "xr0aVz5os",
+        "content": "{\"rrn\": \"527611602917\", \"amount\": 40000, \"bank_name\": \"ICICI Bank\", \"merchant\": \"ICICI ATM\", \"datetime\": \"2025-03-20 09:24:00\", \"response_code\": \"61\", \"transaction_type\": \"ATM Withdrawal\", \"description\": \"Exceeds Withdrawal Amount Limit\"}"
+      },
+      {
+        "role": "assistant",
+        "content": "The transaction was declined because it **Exceeds Withdrawal Amount Limit**. Most RuPay Debit cards have a daily or per-transaction limit for ATM withdrawals (typically ₹20,000 or ₹25,000 depending on the card variant). You tried to withdraw ₹40,000 in one go."
+      },
+      {
+        "role": "user",
+        "content": "Oh, I didn't know there was a limit. How do I get the cash then?"
+      },
+      {
+        "role": "assistant",
+        "content": "You can try withdrawing a smaller amount, like ₹20,000, and see if it goes through. If your card allows multiple withdrawals, you might be able to take out the remaining amount in a second transaction, provided it's within your daily total limit. Alternatively, you can visit a bank branch for larger withdrawals."
+      },
+      {
+        "role": "user",
+        "content": "Okay, I will try 20k twice. Thanks."
+      },
+      {
+        "role": "assistant",
+        "content": "You're welcome! Let me know if you need anything else."
+      }
+    ],
+    "metadata": {
+      "Topic": "RuPay_Transaction_Failure",
+      "Scenario": "Exceeds Withdrawal Limit",
+      "current_date": [
+        "2025-03-20"
+      ],
+      "current_time": [
+        "09:30:00"
+      ]
+    }
+  },
+  {
+    "conversation_id": "RUPAY_54_e263d816",
+    "messages": [
+      {
+        "role": "user",
+        "content": "My card isn't working at the petrol pump. It keeps saying declined."
+      },
+      {
+        "role": "assistant",
+        "content": "I can help with that. Could you provide the date and time you tried to swipe, the amount, and the last 4 digits of your card?"
+      },
+      {
+        "role": "user",
+        "content": "Today, 2025-04-29, around 13:24. Bill was ₹3,674. Card ends in 1122."
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "5fNSw4aWF",
+            "type": "function",
+            "function": {
+              "name": "get_transaction_details",
+              "arguments": "{\"date\":\"2025-04-29\",\"approx_time\":\"13:24\",\"amount\":3674,\"card_last_4\":\"1122\"}"
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "5fNSw4aWF",
+        "content": "{\"rrn\": \"713638481998\", \"amount\": 3674, \"bank_name\": \"Kotak Mahindra Bank\", \"merchant\": \"Indian Oil\", \"datetime\": \"2025-04-29 13:24:00\", \"response_code\": \"54\", \"transaction_type\": \"POS Purchase\", \"description\": \"Expired Card\"}"
+      },
+      {
+        "role": "assistant",
+        "content": "It appears the transaction was declined because your card is **Expired**. Please check the 'Valid Thru' date printed on the front of your card. If that date has passed, the card is no longer active."
+      },
+      {
+        "role": "user",
+        "content": "Oh wait, I think I picked up my old card by mistake. I have a new one."
+      },
+      {
+        "role": "assistant",
+        "content": "That explains it! Please try the transaction again using your new, active card. The expired card should be destroyed to avoid confusion."
+      },
+      {
+        "role": "user",
+        "content": "Will do. Thanks."
+      },
+      {
+        "role": "assistant",
+        "content": "No problem! Drive safe."
+      }
+    ],
+    "metadata": {
+      "Topic": "RuPay_Transaction_Failure",
+      "Scenario": "Expired Card",
+      "current_date": [
+        "2025-04-29"
+      ],
+      "current_time": [
+        "13:30:00"
+      ]
+    }
+  },
+  {
+    "conversation_id": "RUPAY_59_3bd3315f",
+    "messages": [
+      {
+        "role": "user",
+        "content": "I tried to buy a phone online for ₹25,000 and it got blocked. I received a message about fraud?"
+      },
+      {
+        "role": "assistant",
+        "content": "That sounds concerning. Let me verify the details. Please share the date, time, amount, and the last 4 digits of the card you used."
+      },
+      {
+        "role": "user",
+        "content": "2025-05-08 at 11:47 AM. Amount ₹25,000. Card ending 8899."
+      },
+      {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "lmfY7zeIm",
+            "type": "function",
+            "function": {
+              "name": "get_transaction_details",
+              "arguments": "{\"date\":\"2025-05-08\",\"approx_time\":\"11:47\",\"amount\":25000,\"card_last_4\":\"8899\"}"
+            }
+          }
+        ]
+      },
+      {
+        "role": "tool",
+        "tool_call_id": "lmfY7zeIm",
+        "content": "{\"rrn\": \"347431843838\", \"amount\": 25000, \"bank_name\": \"HDFC Bank\", \"merchant\": \"Amazon India\", \"datetime\": \"2025-05-08 11:47:00\", \"response_code\": \"59\", \"transaction_type\": \"E-commerce\", \"description\": \"Suspected Fraud\"}"
+      },
+      {
+        "role": "assistant",
+        "content": "The transaction was declined due to **Suspected Fraud**. This usually happens when the bank's security system flags a high-value transaction or unusual activity pattern to protect your funds."
+      },
+      {
+        "role": "user",
+        "content": "But it's me! I need to buy this phone. How do I unlock it?"
+      },
+      {
+        "role": "assistant",
+        "content": "You will likely receive a call or SMS from your bank asking you to confirm if this transaction was genuine. Once you confirm it, they will unblock the card for this purchase. Alternatively, you can call HDFC Bank customer care right now to verify your identity and authorize the transaction."
+      },
+      {
+        "role": "user",
+        "content": "Okay, I'll call them. Will money be cut?"
+      },
+      {
+        "role": "assistant",
+        "content": "No, the transaction was blocked before any money was deducted. Your balance remains safe."
+      }
+    ],
+    "metadata": {
+      "Topic": "RuPay_Transaction_Failure",
+      "Scenario": "Suspected Fraud",
+      "current_date": [
+        "2025-05-08"
+      ],
+      "current_time": [
+        "12:00:00"
+      ]
+    }
+  }
+]
