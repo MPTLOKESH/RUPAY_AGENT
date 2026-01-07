@@ -13,17 +13,19 @@ function ChatInput({ onSend, disabled }) {
 
     return (
         <form onSubmit={handleSubmit} className="chat-input-container">
-            <input
-                type="text"
-                className="chat-input"
-                placeholder="Type your message here..."
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                disabled={disabled}
-            />
-            <button type="submit" className="send-button" disabled={disabled || !input.trim()}>
-                Send
-            </button>
+            <div className="chat-input-wrapper">
+                <input
+                    type="text"
+                    className="chat-input"
+                    placeholder="Type your message here..."
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    disabled={disabled}
+                />
+                <button type="submit" className="send-button" disabled={disabled || !input.trim()}>
+                    Send
+                </button>
+            </div>
         </form>
     );
 }

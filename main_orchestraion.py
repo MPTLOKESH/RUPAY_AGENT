@@ -158,7 +158,7 @@ class MainOrchestrator:
                 # Feed the tool output back to the LLM to generate a natural language response
                 messages.append(AIMessage(content=content))
                 # CRITICAL: We explicitly ask for Natural Language to override the System Prompt's JSON rule
-                messages.append(HumanMessage(content=f"Worker Output: {worker_result}\n\nIMPORTANT: Respond to the user in natural language (NOT JSON) based on the above result."))
+                messages.append(HumanMessage(content=f"Worker Output: {worker_result}\n\nIMPORTANT: Respond to the user in natural language (NOT JSON) based on the above result. Use standard Markdown formatting (bolding for key values, bullet points for lists, and newlines for readability)."))
                 
                 final_response = self.llm.invoke(messages)
                 return final_response.content

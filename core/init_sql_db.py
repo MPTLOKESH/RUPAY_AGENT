@@ -22,10 +22,10 @@ def init_db():
     try:
         engine = create_engine(db_url)
         conn = engine.connect()
-        print(f"✅ Connected to Docker Database on Port {DB_CONFIG['port']}.")
+        print(f"Connected to Docker Database on Port {DB_CONFIG['port']}.")
         conn.close()
     except Exception as e:
-        print(f"❌ Connection Failed. Is Docker running? Error: {e}")
+        print(f"Connection Failed. Is Docker running? Error: {e}")
         return
 
     # 2. Read Excel
@@ -35,15 +35,17 @@ def init_db():
         
         # 3. Rename columns to match SQL standards (Adapted for RuPay)
         # Actual columns found: 'rrn', 'amt', 'asdt', 'merchant_name', 'reason_code', ...
+        # 3. Rename columns - keeping source names for consistency with new agent logic
+        # REMOVED renaming of amt, tstamp_trans, reason_code to match new schema logic
         df.rename(columns={
             "rrn": "rrn",
-            "amt": "amount",
-            "reason_code": "response_code",
+            # "amt": "amount",                   <-- Keeping 'amt'
+            # "reason_code": "response_code",    <-- Keeping 'reason_code'
             "reasoncodedesc": "description",
             "merchant_name": "merchant",
             "iss_bankname": "bank_name",
             "cc_dc_flag": "card_type",
-            "tstamp_trans": "date_and_time"
+            # "tstamp_trans": "date_and_time"    <-- Keeping 'tstamp_trans'
         }, inplace=True)
 
         # 4. Data Type Conversion and Filling Missing Data
@@ -59,18 +61,20 @@ def init_db():
             df["transaction_type"] = "POS Purchase"
             
         df["card_number"] = df["card_number"].astype(str)
-        df["response_code"] = df["response_code"].astype(str)
+        if "reason_code" in df.columns:
+            df["reason_code"] = df["reason_code"].astype(str)
         
         # Convert to datetime string format that Postgres prefers
-        df["date_and_time"] = pd.to_datetime(df["date_and_time"])
+        if "tstamp_trans" in df.columns:
+            df["tstamp_trans"] = pd.to_datetime(df["tstamp_trans"])
 
         # 5. Upload to SQL
         print("Uploading data to table 'transactions'...")
         df.to_sql('transactions', engine, if_exists='replace', index=False)
-        print("✅ Success! RuPay Docker Database populated.")
+        print("Success! RuPay Docker Database populated.")
         
     except Exception as e:
-        print(f"❌ Error processing data: {e}")
+        print(f"Error processing data: {e}")
 
 if __name__ == "__main__":
     init_db()
