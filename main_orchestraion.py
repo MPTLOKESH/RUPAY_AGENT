@@ -157,8 +157,21 @@ class MainOrchestrator:
                 # --- STEP 4: Final Synthesis ---
                 # Feed the tool output back to the LLM to generate a natural language response
                 messages.append(AIMessage(content=content))
+                
                 # CRITICAL: We explicitly ask for Natural Language to override the System Prompt's JSON rule
-                messages.append(HumanMessage(content=f"Worker Output: {worker_result}\n\nIMPORTANT: Respond to the user in natural language (NOT JSON) based on the above result. Use standard Markdown formatting (bolding for key values, bullet points for lists, and newlines for readability)."))
+                prompt_text = (
+                    f"Worker Output: {worker_result}\n\n"
+                    "IMPORTANT INSTRUCTIONS:\n"
+                    "1. PRIVACY: Do NOT reveal the 'Reason Code' (e.g., 91) or 'Card Number' (e.g., 1234).\n"
+                    "2. CONTEXT CHECK: Check History. If confirmed, proceed to explanation.\n"
+                    "3. CONFIRMATION: If NEW lookup, ask: 'I found a transaction of [Exact Amount] at [Exact Time]. Is this the one?'\n"
+                    "4. PERSONA: Act as a warm, human Customer Support Agent. \n"
+                    "   - DO NOT format your response like a system report (e.g., avoid 'Date: ... Status: ...').\n"
+                    "   - DO NOT say 'The system returned...' or 'Unknown Response Code'.\n"
+                    "   - Simply explain the issue in plain English based on the 'suggested_message'.\n"
+                    "   - Example: 'I see the transaction failed because of a network timeout. Don't worry, your money is safe.'\n"
+                )
+                messages.append(HumanMessage(content=prompt_text))
                 
                 final_response = self.llm.invoke(messages)
                 return final_response.content

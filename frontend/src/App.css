@@ -42,44 +42,40 @@
 }
 
 [data-theme='dark'] {
-    /* Dark Mode Overrides */
+    /* Dark Mode Overrides - Professional Midnight Palette */
 
     /* Backgrounds */
-    --bg-primary: #1F2937;
-    /* Gray-800 */
-    --bg-secondary: #111827;
-    /* Gray-900 */
-    --bg-tertiary: #374151;
-    /* Gray-700 */
-    --bg-header: #1F2937;
+    --bg-primary: #111827;
+    /* Gray-900 (Sidebar/Header) */
+    --bg-secondary: #030712;
+    /* Gray-950 (Main Chat) */
+    --bg-tertiary: #1f2937;
+    /* Gray-800 (Hover) */
+    --bg-header: #111827;
 
     /* Text */
     --text-primary: #F9FAFB;
     /* Gray-50 */
-    --text-secondary: #D1D5DB;
-    /* Gray-300 */
+    --text-secondary: #E5E7EB;
+    /* Gray-200 */
     --text-tertiary: #9CA3AF;
     /* Gray-400 */
 
     /* Borders */
-    --border-color: #374151;
-    /* Gray-700 */
-    --border-light: #1F2937;
+    --border-color: #1F2937;
+    --border-light: #111827;
 
     /* Message Bubbles */
-    --bubble-user: #1E3A8A;
-    /* Blue-900 */
-    --bubble-user-border: #1E40AF;
-    /* Blue-800 */
-    --bubble-assistant: #374151;
-    /* Gray-700 */
-    --bubble-assistant-border: #4B5563;
-    /* Gray-600 */
+    --bubble-user: #3B82F6;
+    /* Bright Blue */
+    --bubble-user-border: #2563EB;
+    --bubble-assistant: #1f2937;
+    /* Dark Gray Card */
+    --bubble-assistant-border: #374151;
 
     /* UI Elements */
-    --input-bg: #374151;
+    --input-bg: #1f2937;
     --btn-primary: #3B82F6;
-    /* Brighter blue for contrast */
     --btn-primary-hover: #2563EB;
 }
 
@@ -137,6 +133,74 @@ body {
     color: var(--text-secondary);
     padding-left: 1rem;
     border-left: 1px solid var(--border-color);
+}
+
+/* Theme Selector */
+.theme-selector {
+    position: relative;
+    z-index: 200;
+}
+
+.theme-btn {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: var(--transition);
+    min-width: 120px;
+    justify-content: space-between;
+}
+
+.theme-btn:hover {
+    border-color: var(--rupay-blue);
+    background: var(--bg-tertiary);
+}
+
+.theme-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 0.5rem;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    width: 140px;
+    overflow: hidden;
+    padding: 0.25rem;
+}
+
+.theme-option {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    transition: var(--transition);
+}
+
+.theme-option:hover {
+    background: var(--bg-tertiary);
+    color: var(--rupay-blue);
+}
+
+.theme-option.active {
+    background: var(--bg-tertiary);
+    color: var(--rupay-blue);
+    font-weight: 600;
 }
 
 /* Layout */
@@ -304,6 +368,7 @@ body {
     background: var(--bubble-user);
     border: 1px solid var(--bubble-user-border);
     color: var(--text-primary);
+    /* Ensure white text on blue bubble */
     border-top-right-radius: 4px;
 }
 
@@ -360,7 +425,8 @@ body {
 
 .chat-input {
     flex: 1;
-    background: white;
+    background: var(--input-bg);
+    /* Use variable for dark mode support */
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     padding: 0.875rem 1rem;

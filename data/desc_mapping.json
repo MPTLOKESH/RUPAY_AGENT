@@ -219,5 +219,19 @@
                 "Suggested Agent Response": "“Large, unusual transactions often trigger security blocks. You may receive a call from the bank to verify it's you.”"
             }
         ]
+    },
+    {
+        "scenario_name": "External Decline (Time Out)",
+        "description": "The transaction failed because the external bank or network did not respond in time.",
+        "system_behavior": "The response from the acquiring bank was received too late.",
+        "technical_details": {
+            "Error Code": "68",
+            "Resp Code": "68",
+            "Response Desc": "EXTERNAL DECLINE / TIMEOUT",
+            "Decline Type": "Technical Decline",
+            "Decline Responsibility": "Acquirer"
+        },
+        "agent_message": "“It looks like the network timed out. Please wait a moment and try again.”",
+        "user_scenarios": []
     }
 ]

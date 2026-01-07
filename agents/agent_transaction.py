@@ -29,13 +29,7 @@ class TransactionAgent:
             self.engine = None
             self.codes = []
 
-    def _get_desc(self, resp_code):
-        """Helper to find description from loaded JSON mapping"""
-        for item in self.codes:
-            tech = item.get("technical_details", {})
-            if str(tech.get("Resp Code")) == str(resp_code):
-                return tech.get("Response Desc")
-        return "UNKNOWN RESPONSE CODE"
+
 
     def execute(self, params):
         date = params.get("date")
@@ -122,14 +116,29 @@ class TransactionAgent:
             if not row:
                 return json.dumps({"response_code": "91", "description": "No transaction found."})
 
-            # Get Description
+            # Get Description and Agent Message
             # Mapped response_code -> reason_code (new column)
-            description = self._get_desc(row.reason_code)
+            details = self._get_details(row.reason_code)
 
             return json.dumps({
                 "date": str(row.tstamp_trans),
-                "amount": int(row.amt)
+                "amount": int(row.amt),
+                "status": "Failed" if row.reason_code != "00" else "Success",
+                "reason_code": str(row.reason_code),
+                "error_reason": details["description"],
+                "suggested_message": details["agent_message"]
             })
 
         except Exception as e:
             return json.dumps({"status": "Error", "message": f"DB Error: {str(e)}"})
+            
+    def _get_details(self, resp_code):
+        """Helper to find details from loaded JSON mapping"""
+        for item in self.codes:
+            tech = item.get("technical_details", {})
+            if str(tech.get("Resp Code")) == str(resp_code):
+                return {
+                    "description": tech.get("Response Desc", "UNKNOWN"),
+                    "agent_message": item.get("agent_message", "Transaction failed.")
+                }
+        return {"description": "UNKNOWN RESPONSE CODE", "agent_message": "Transaction failed with unknown error."}
