@@ -123,10 +123,18 @@ function App() {
                             ))}
                             {loading && (
                                 <div className="message assistant">
-                                    <div className="message-avatar">🤖</div>
+                                    <div className="message-avatar">
+                                        <img
+                                            src="/rupay-logo.png"
+                                            alt="RuPay"
+                                            style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '4px' }}
+                                        />
+                                    </div>
                                     <div className="message-content">
                                         <div className="rupay-loader">
-                                            <img src="/rupay-logo.png" alt="Loading..." className="loader-logo" />
+                                            <span></span>
+                                            <span></span>
+                                            <span></span>
                                         </div>
                                     </div>
                                 </div>
