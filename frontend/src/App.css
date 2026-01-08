@@ -229,11 +229,22 @@ body {
     flex-shrink: 0;
     font-family: 'Inter', sans-serif;
     transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow-x: hidden;
+    /* Ensure content doesn't spill during collapse */
 }
 
 .chat-history.collapsed {
     width: 80px;
     /* Force thin width */
+}
+
+.chat-history.collapsed .chat-history-header {
+    padding: 1rem 0;
+    /* Reduce padding to center align items */
+}
+
+.chat-history.collapsed .chat-history-list {
+    display: none;
 }
 
 .chat-history-header {
