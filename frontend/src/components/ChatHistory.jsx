@@ -56,6 +56,11 @@ function ChatHistory({ chats, activeChat, onNewChat, onSelectChat, onDeleteChat 
         return 'New Chat';
     };
 
+    const handleNewChat = () => {
+        setIsCollapsed(false);
+        onNewChat();
+    };
+
     return (
         <div className={`chat-history ${isCollapsed ? 'collapsed' : ''}`}>
             <div className="chat-history-header">
@@ -71,7 +76,7 @@ function ChatHistory({ chats, activeChat, onNewChat, onSelectChat, onDeleteChat 
                     </svg>
                 </button>
 
-                <button className="new-chat-button" onClick={onNewChat} title="New Chat">
+                <button className="new-chat-button" onClick={handleNewChat} title="New Chat">
                     {isCollapsed ? (
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
