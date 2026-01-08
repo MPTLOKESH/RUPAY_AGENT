@@ -128,7 +128,7 @@ class MainOrchestrator:
                     if msg_type == "greeting":
                         return "Hello! I am your RuPay AI Assistant. I can help you check failed transactions or answer questions about RuPay services."
                     else:
-                        return "I am an AI agent powered by RuPay. I can verify transaction statuses, explain error codes, and assist with general banking queries."
+                        return "I am an AI agent powered by RuPay. I can verify transaction statuses and assist with general banking queries."
                 
                 elif target == "guardrail_agent":
                     # Guardrails - Return Specific Refusal
@@ -151,6 +151,10 @@ class MainOrchestrator:
                 elif target == "reject":
                     # Irrelevant Query
                     return "I can only assist with RuPay transaction issues and general banking queries."
+
+                else:
+                    # Fallback for unknown agents
+                    worker_result = "System: The requested agent is not available. Please answer politely that you cannot handle this specific request."
  
                 print(f"[System] Worker Output: {worker_result}")
                 
@@ -162,19 +166,26 @@ class MainOrchestrator:
                 prompt_text = (
                     f"Worker Output: {worker_result}\n\n"
                     "IMPORTANT INSTRUCTIONS:\n"
-                    "1. PRIVACY: Do NOT reveal the 'Reason Code' (e.g., 91) or 'Card Number' (e.g., 1234).\n"
-                    "2. CONTEXT CHECK: Check History. If confirmed, proceed to explanation.\n"
-                    "3. CONFIRMATION: If NEW lookup, ask: 'I found a transaction of [Exact Amount] at [Exact Time]. Is this the one?'\n"
-                    "4. PERSONA: Act as a warm, human Customer Support Agent. \n"
+                    "1. IGNORE previous JSON output requirements. You MUST respond in plain text.\n"
+                    "2. PRIVACY: Do NOT reveal the 'Reason Code' (e.g., 91) or 'Card Number' (e.g., 1234).\n"
+                    "3. CONTEXT CHECK: Check History. If confirmed, proceed to explanation.\n"
+                    "4. CONFIRMATION: If NEW lookup, ask: 'I found a transaction of [Exact Amount] at [Exact Time]. Is this the one?'\n"
+                    "5. PERSONA: Act as a warm, human Customer Support Agent. \n"
                     "   - DO NOT format your response like a system report (e.g., avoid 'Date: ... Status: ...').\n"
                     "   - DO NOT say 'The system returned...' or 'Unknown Response Code'.\n"
-                    "   - Simply explain the issue in plain English based on the 'suggested_message'.\n"
+                    "   - Explain the issue in plain English accurately based on the 'suggested_message'.\n"
                     "   - Example: 'I see the transaction failed because of a network timeout. Don't worry, your money is safe.'\n"
                 )
                 messages.append(HumanMessage(content=prompt_text))
                 
                 final_response = self.llm.invoke(messages)
-                return final_response.content
+                final_content = final_response.content
+
+                # Final Safeguard: If output still looks like JSON, return a friendly error
+                if final_content.strip().startswith("{") and '"target":' in final_content:
+                    return "I apologize, but I couldn't process that request correctly. Could you please rephrase?"
+
+                return final_content
 
             except json.JSONDecodeError:
                 return f"Error: LLM generated invalid JSON.\nRaw output: {content}"

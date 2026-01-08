@@ -170,24 +170,25 @@ body {
 
 .theme-btn {
     background: transparent;
-    /* Changed to transparent for cleaner look */
     border: 1px solid var(--border-color);
-    color: var(--text-primary);
-    width: 40px;
-    height: 40px;
+    color: var(--text-secondary);
+    /* Softer icon color */
+    width: 36px;
+    height: 36px;
     padding: 0;
-    border-radius: var(--radius-md);
+    border-radius: 50%;
+    /* Circle looks better for icons */
     cursor: pointer;
-    font-size: 1.2rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: var(--transition);
+    transition: all 0.2s ease;
 }
 
 .theme-btn:hover {
-    border-color: var(--rupay-blue);
     background: var(--bg-tertiary);
+    color: var(--text-primary);
+    border-color: var(--text-tertiary);
 }
 
 .theme-menu {
