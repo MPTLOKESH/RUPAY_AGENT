@@ -41,6 +41,14 @@ function App() {
     };
 
     const createNewChat = () => {
+        // Check if there's already an empty chat (only has the initial greeting)
+        const existingEmptyChat = chats.find(chat => chat.messages.length === 1 && chat.messages[0].role === 'assistant');
+
+        if (existingEmptyChat) {
+            setActiveChat(existingEmptyChat.id);
+            return;
+        }
+
         const newChat = {
             id: Date.now().toString(),
             timestamp: Date.now(),
@@ -69,6 +77,21 @@ function App() {
         }
     };
 
+    const clearAllChats = () => {
+        if (window.confirm('Are you sure you want to delete all chat history?')) {
+            const newChat = {
+                id: Date.now().toString(),
+                timestamp: Date.now(),
+                messages: [
+                    { role: 'assistant', content: 'Hello! I am RuPay Agent, your AI-powered transaction assistant. How can I help you today?' }
+                ]
+            };
+            setChats([newChat]);
+            setActiveChat(newChat.id);
+            localStorage.removeItem(STORAGE_KEY);
+        }
+    };
+
     const updateChatMessages = (chatId, newMessages) => {
         setChats(prev => prev.map(chat =>
             chat.id === chatId
@@ -90,7 +113,25 @@ function App() {
         updateChatMessages(activeChat, newMessages);
         setLoading(true);
 
+        // Check is it the first user message to generate title
+        const isFirstUserMessage = currentChat.messages.filter(msg => msg.role === 'user').length === 0;
+
         try {
+            // Generate title if first message
+            /* // Temporarily disabled title generation until backend is ready
+            if (isFirstUserMessage) {
+                 generateTitle(userMessage).then(title => {
+                    if (title) {
+                        setChats(prev => prev.map(chat => 
+                            chat.id === activeChat 
+                                ? { ...chat, title: title }
+                                : chat
+                        ));
+                    }
+                });
+            }
+            */
+
             // API Call to backend
             const response = await sendMessage(userMessage, newMessages);
             updateChatMessages(activeChat, [...newMessages, { role: 'assistant', content: response }]);
@@ -114,6 +155,7 @@ function App() {
                     onNewChat={createNewChat}
                     onSelectChat={selectChat}
                     onDeleteChat={deleteChat}
+                    onClearAll={clearAllChats}
                 />
                 <div className="main-content">
                     <div className="chat-container">

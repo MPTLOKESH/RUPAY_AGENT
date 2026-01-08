@@ -23,8 +23,9 @@
     --border-light: #F3F4F6;
 
     /* Message Bubbles */
-    --bubble-user: #EFF6FF;
-    --bubble-user-border: #BFDBFE;
+    --bubble-user: #2C3E8F;
+    /* Use brand blue for white text contrast */
+    --bubble-user-border: #2C3E8F;
     --bubble-assistant: #FFFFFF;
     --bubble-assistant-border: #E5E7EB;
 
@@ -67,18 +68,20 @@
     --border-light: #111827;
 
     /* Message Bubbles */
-    --bubble-user: #3B82F6;
-    /* Bright Blue */
-    --bubble-user-border: #2563EB;
-    --bubble-assistant: #1f2937;
+    --bubble-user: #2563EB;
+    /* Stronger Blue */
+    --bubble-user-border: #1E40AF;
+    --bubble-assistant: #1F2937;
     /* Dark Gray Card */
     --bubble-assistant-border: #374151;
 
     /* UI Elements */
-    --input-bg: #1f2937;
+    --input-bg: #1F2937;
     --btn-primary: #3B82F6;
     --btn-primary-hover: #2563EB;
 
+    --bg-button-collapsed: #1E3A8A;
+    /* Dark Indigo for collapsed icon */
     --text-accent: #60A5FA;
 }
 
@@ -96,6 +99,25 @@ body {
     -webkit-font-smoothing: antialiased;
     overflow: hidden;
     /* Prevent body scroll, let app container handle it */
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-tertiary);
 }
 
 #root {
@@ -126,17 +148,18 @@ body {
 }
 
 .header-title {
-    font-size: 1.125rem;
-    font-weight: 600;
-    color: var(--text-accent);
-    margin-left: 0.5rem;
+    display: none;
+    /* Hide old title styles just in case */
 }
 
 .header-subtitle {
-    font-size: 0.875rem;
-    color: var(--text-secondary);
-    padding-left: 1rem;
-    border-left: 1px solid var(--border-color);
+    /* Styles are now largely inline or handled by parent flex, 
+       but keeping base styles for fallback */
+    font-size: 1rem;
+    color: var(--text-primary);
+    padding: 0;
+    margin: 0;
+    border: none;
 }
 
 /* Theme Selector */
@@ -146,7 +169,8 @@ body {
 }
 
 .theme-btn {
-    background: var(--bg-secondary);
+    background: transparent;
+    /* Changed to transparent for cleaner look */
     border: 1px solid var(--border-color);
     color: var(--text-primary);
     width: 40px;
@@ -171,7 +195,8 @@ body {
     top: 100%;
     right: 0;
     margin-top: 0.5rem;
-    background: var(--bg-secondary);
+    background: var(--bg-primary);
+    /* Use primary bg for dropdown */
     border: 1px solid var(--border-color);
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-md);
@@ -216,13 +241,14 @@ body {
     max-width: 1600px;
     margin: 0 auto;
     width: 100%;
+    background: var(--bg-secondary);
 }
 
 /* Sidebar */
 .chat-history {
     width: 280px;
-    background: #F8F9FA;
-    /* Light gray professional bg */
+    background: var(--bg-primary);
+    /* Changed to variable */
     border-right: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
@@ -281,8 +307,9 @@ body {
 
 .new-chat-button {
     width: 100%;
-    background: white;
-    color: var(--rupay-blue);
+    background: var(--bg-primary);
+    /* Changed to variable */
+    color: var(--btn-primary);
     border: 1px solid var(--border-color);
     padding: 0.75rem;
     border-radius: var(--radius-md);
@@ -305,8 +332,9 @@ body {
     padding: 0;
     justify-content: center;
     border-radius: 50%;
-    background: #E0E7FF;
-    /* Light Indigo background for icon */
+    background: var(--bg-button-collapsed, #E0E7FF);
+    /* Use variable with fallback */
+    color: var(--btn-primary);
     border-color: transparent;
 }
 
@@ -319,6 +347,7 @@ body {
     border-color: var(--rupay-blue);
     transform: translateY(-1px);
     box-shadow: var(--shadow-md);
+    background: var(--bg-tertiary);
 }
 
 .chat-history-list {
@@ -341,8 +370,17 @@ body {
     padding-left: 0.5rem;
 }
 
+.chat-area-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    background: var(--bg-secondary);
+}
+
 .chat-history-item {
-    padding: 0.6rem 0.5rem;
+    padding: 0.75rem 0.5rem;
     margin-bottom: 0.25rem;
     border-radius: var(--radius-md);
     cursor: pointer;
@@ -356,22 +394,43 @@ body {
     border: 1px solid transparent;
 }
 
+[data-theme='dark'] .chat-history-item {
+    color: var(--text-tertiary);
+    /* Lighter gray for inactive items in dark mode */
+}
+
 .chat-history.collapsed .chat-history-item {
     justify-content: center;
     padding: 0.75rem 0.25rem;
 }
 
 .chat-history-item:hover {
-    background: #EAEBF0;
+    background: var(--bg-tertiary);
     color: var(--text-primary);
 }
 
 .chat-history-item.active {
-    background: white;
+    background: var(--bg-tertiary);
+
     border-color: var(--border-color);
     color: var(--rupay-blue);
     font-weight: 600;
     box-shadow: var(--shadow-sm);
+}
+
+/* Dark Mode Override for Active Chat Item */
+[data-theme='dark'] .chat-history-item.active {
+    background: #1E3A8A;
+    /* Darker blue background */
+    color: #FFFFFF;
+    /* White text for maximum contrast */
+    border-color: transparent;
+}
+
+[data-theme='dark'] .chat-history-item.active .chat-item-icon {
+    color: #60A5FA;
+    /* Light blue icon */
+    opacity: 1;
 }
 
 .chat-item-icon {
@@ -418,10 +477,9 @@ body {
 }
 
 .chat-item-delete-btn:hover {
-    background: #FEE2E2;
-    /* Red-100 */
+    background: rgba(220, 38, 38, 0.1);
+    /* Changed to rgba for dark mode compat */
     color: #DC2626;
-    /* Red-600 */
 }
 
 .empty-state {
@@ -434,7 +492,38 @@ body {
 .chat-history-footer {
     padding: 1rem;
     border-top: 1px solid var(--border-color);
-    background: #F8F9FA;
+    background: var(--bg-primary);
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.clear-history-btn {
+    width: 100%;
+    background: transparent;
+    border: 1px dashed var(--border-color);
+    color: var(--text-tertiary);
+    padding: 0.6rem;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.2s;
+}
+
+.clear-history-btn:hover {
+    border-color: #EF4444;
+    color: #EF4444;
+    background: rgba(239, 68, 68, 0.05);
+}
+
+.chat-history.collapsed .clear-history-btn {
+    padding: 0.5rem;
+    border: 1px solid transparent;
+    justify-content: center;
 }
 
 .user-profile {
@@ -545,9 +634,12 @@ body {
 }
 
 .message.assistant .message-avatar {
-    background: white;
+    background: #FFFFFF;
+    /* Force white background for logo visibility */
     border: 1px solid var(--border-color);
     color: var(--rupay-blue);
+    overflow: hidden;
+    /* Ensure image stays within circle */
 }
 
 .message.user .message-avatar {
@@ -574,8 +666,8 @@ body {
 .message.user .message-content {
     background: var(--bubble-user);
     border: 1px solid var(--bubble-user-border);
-    color: var(--text-primary);
-    /* Ensure white text on blue bubble */
+    color: var(--text-on-brand);
+    /* Changed to text-on-brand */
     border-top-right-radius: 4px;
 }
 
@@ -619,6 +711,7 @@ body {
     /* Center vertically */
     padding: 0 2rem;
     z-index: 10;
+
 }
 
 .chat-input-wrapper {
