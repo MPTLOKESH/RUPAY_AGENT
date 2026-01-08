@@ -4,6 +4,7 @@
     /* Professional Corporate Palette - Light Mode (Default) */
     --rupay-blue: #2C3E8F;
     --rupay-dark: #1a2656;
+    --text-accent: #2C3E8F;
 
     /* Backgrounds */
     --bg-primary: #FFFFFF;
@@ -77,6 +78,8 @@
     --input-bg: #1f2937;
     --btn-primary: #3B82F6;
     --btn-primary-hover: #2563EB;
+
+    --text-accent: #60A5FA;
 }
 
 * {
@@ -125,7 +128,8 @@ body {
 .header-title {
     font-size: 1.125rem;
     font-weight: 600;
-    color: var(--rupay-blue);
+    color: var(--text-accent);
+    margin-left: 0.5rem;
 }
 
 .header-subtitle {
@@ -145,16 +149,16 @@ body {
     background: var(--bg-secondary);
     border: 1px solid var(--border-color);
     color: var(--text-primary);
-    padding: 0.5rem 1rem;
+    width: 40px;
+    height: 40px;
+    padding: 0;
     border-radius: var(--radius-md);
     cursor: pointer;
-    font-size: 0.9rem;
+    font-size: 1.2rem;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    justify-content: center;
     transition: var(--transition);
-    min-width: 120px;
-    justify-content: space-between;
 }
 
 .theme-btn:hover {
@@ -273,7 +277,7 @@ body {
 
 .chat-history-item.active {
     background: var(--bg-tertiary);
-    color: var(--rupay-blue);
+    color: var(--text-accent);
     font-weight: 500;
 }
 
@@ -466,18 +470,58 @@ body {
 }
 
 /* Loading */
-.loading-spinner {
-    width: 20px;
-    height: 20px;
-    border: 2px solid #E5E7EB;
-    border-top-color: var(--rupay-blue);
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
+/* RuPay Professional Loader */
+.rupay-loader {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem;
 }
 
-@keyframes spin {
-    to {
-        transform: rotate(360deg);
+.loader-logo {
+    height: 32px;
+    width: auto;
+    object-fit: contain;
+    /* "Real" Animation: Float + Glow */
+    animation: float-breathe 2.5s ease-in-out infinite;
+    filter: drop-shadow(0 2px 4px rgba(44, 62, 143, 0.2));
+}
+
+@keyframes float-breathe {
+
+    0%,
+    100% {
+        transform: translateY(0) scale(1);
+        filter: drop-shadow(0 2px 4px rgba(44, 62, 143, 0.2));
+    }
+
+    50% {
+        transform: translateY(-4px) scale(1.05);
+        filter: drop-shadow(0 8px 12px rgba(44, 62, 143, 0.3));
+    }
+}
+
+.rupay-loader .dots {
+    color: var(--text-tertiary);
+    -webkit-text-fill-color: var(--text-tertiary);
+    margin-left: 4px;
+    font-size: 1.1em;
+    letter-spacing: 1px;
+    animation: pulse-dots 1.5s infinite ease-in-out;
+    opacity: 0.7;
+}
+
+
+
+@keyframes pulse-dots {
+
+    0%,
+    100% {
+        opacity: 0.4;
+    }
+
+    50% {
+        opacity: 1;
     }
 }
 

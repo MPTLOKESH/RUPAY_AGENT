@@ -1,71 +1,38 @@
 import React from 'react';
 import { useTheme } from '../context/ThemeContext';
 
-import { useState, useRef, useEffect } from 'react';
+
 
 function Header() {
     const { theme, setTheme } = useTheme();
-    const [isOpen, setIsOpen] = useState(false);
-    const dropdownRef = useRef(null);
 
-    // Close dropdown when clicking outside
-    useEffect(() => {
-        function handleClickOutside(event) {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-                setIsOpen(false);
-            }
-        }
-        document.addEventListener("mousedown", handleClickOutside);
-        return () => document.removeEventListener("mousedown", handleClickOutside);
-    }, []);
-
-    const themes = [
-        { id: 'light', label: 'Light', icon: '☀️' },
-        { id: 'dark', label: 'Dark', icon: '🌙' },
-        { id: 'system', label: 'System', icon: '🖥️' }
-    ];
-
-    const currentTheme = themes.find(t => t.id === theme) || themes[2];
+    const toggleTheme = () => {
+        setTheme(theme === 'dark' ? 'light' : 'dark');
+    };
 
     return (
         <header className="header">
             <div className="header-content">
-                <img
-                    src="/rupay-logo.png"
-                    alt="RuPay"
-                    style={{ height: '40px', objectFit: 'contain' }}
-                />
+                <a href="https://www.npci.org.in/product/rupay" target="_blank" rel="noopener noreferrer">
+                    <img
+                        src="/rupay-logo.png"
+                        alt="RuPay"
+                        style={{ height: '40px', objectFit: 'contain', cursor: 'pointer' }}
+                    />
+                </a>
                 <div style={{ flex: 1 }}>
                     <h1 className="header-title">RuPay Agent</h1>
                     <p className="header-subtitle">AI-Powered Transaction Assistant</p>
                 </div>
 
-                <div className="theme-selector" ref={dropdownRef}>
+                <div className="theme-selector">
                     <button
                         className="theme-btn"
-                        onClick={() => setIsOpen(!isOpen)}
+                        onClick={toggleTheme}
+                        title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
                     >
-                        <span>{currentTheme.icon} {currentTheme.label}</span>
-                        <span style={{ fontSize: '0.8em', opacity: 0.7 }}>▼</span>
+                        <span>{theme === 'dark' ? '☀️' : '🌙'}</span>
                     </button>
-
-                    {isOpen && (
-                        <div className="theme-menu">
-                            {themes.map(t => (
-                                <button
-                                    key={t.id}
-                                    className={`theme-option ${theme === t.id ? 'active' : ''}`}
-                                    onClick={() => {
-                                        setTheme(t.id);
-                                        setIsOpen(false);
-                                    }}
-                                >
-                                    <span>{t.icon}</span>
-                                    <span>{t.label}</span>
-                                </button>
-                            ))}
-                        </div>
-                    )}
                 </div>
             </div>
         </header>

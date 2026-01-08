@@ -125,7 +125,9 @@ function App() {
                                 <div className="message assistant">
                                     <div className="message-avatar">🤖</div>
                                     <div className="message-content">
-                                        <span className="loading-spinner"></span>
+                                        <div className="rupay-loader">
+                                            <img src="/rupay-logo.png" alt="Loading..." className="loader-logo" />
+                                        </div>
                                     </div>
                                 </div>
                             )}
