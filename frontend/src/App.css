@@ -128,14 +128,29 @@ body {
 
 /* Header */
 .header {
-    background: var(--bg-header);
+    background: rgba(255, 255, 255, 0.65);
+    /* slightly more transparent */
+    backdrop-filter: blur(20px) saturate(180%);
+    /* Strong blur + saturation for "liquid" vibrancy */
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
     height: 64px;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+    /* glossy edge */
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
+    /* very subtle depth */
     flex-shrink: 0;
     display: flex;
     align-items: center;
     padding: 0 2rem;
     z-index: 100;
+    position: sticky;
+    top: 0;
+}
+
+[data-theme='dark'] .header {
+    background: rgba(17, 24, 39, 0.65);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
 }
 
 .header-content {
@@ -702,68 +717,101 @@ body {
     bottom: 0;
     left: 0;
     right: 0;
-    height: 90px;
-    /* Fixed height for input area */
-    background: var(--bg-secondary);
-    /* border-top: 1px solid var(--border-color); */
+    height: auto;
+    background: linear-gradient(to top, var(--bg-secondary) 80%, transparent);
+    /* Gradient fade */
     display: flex;
     justify-content: center;
-    align-items: center;
-    /* Center vertically */
-    padding: 0 2rem;
+    align-items: flex-end;
+    padding: 1.5rem 2rem 2rem 2rem;
     z-index: 10;
-
+    pointer-events: none;
+    /* Let clicks pass through area */
 }
 
 .chat-input-wrapper {
-    /* New wrapper to constrain width */
-    max-width: 900px;
+    max-width: 800px;
     width: 100%;
     display: flex;
     gap: 0.75rem;
     position: relative;
+    background: var(--input-bg);
+    padding: 0.5rem;
+    /* Reduced padding */
+    border-radius: 99px;
+    /* Pill shape */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid var(--border-color);
+    pointer-events: auto;
+    /* Enable clicks on input itself */
+    transition: all 0.3s ease;
+    align-items: center;
+    /* Vertically center items */
+}
+
+.chat-input-wrapper:focus-within {
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    border-color: rgba(44, 62, 143, 0.3);
+    transform: translateY(-2px);
 }
 
 .chat-input {
     flex: 1;
-    background: var(--input-bg);
-    /* Use variable for dark mode support */
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-md);
-    padding: 0.875rem 1rem;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 0.75rem 1.25rem;
+    /* Better text padding */
     font-size: 0.95rem;
     font-family: inherit;
     color: var(--text-primary);
-    box-shadow: var(--shadow-sm);
+    box-shadow: none;
     outline: none;
-    transition: var(--transition);
 }
 
 .chat-input:focus {
-    border-color: var(--rupay-blue);
-    box-shadow: 0 0 0 2px rgba(44, 62, 143, 0.1);
+    box-shadow: none;
+    border-color: transparent;
 }
 
 .send-button {
-    background: var(--btn-primary);
+    background: var(--rupay-blue);
+    /* Default Brand Blue */
     color: white;
     border: none;
-    border-radius: var(--radius-md);
-    padding: 0 1.5rem;
+    border-radius: 50%;
+    /* Circular button */
+    width: 42px;
+    /* Smaller button */
+    height: 42px;
+    /* Smaller button */
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-weight: 500;
     cursor: pointer;
-    transition: var(--transition);
-    height: 48px;
-    /* Match input height roughly */
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    flex-shrink: 0;
 }
 
 .send-button:hover:not(:disabled) {
-    background: var(--btn-primary-hover);
+    background: #1e3a8a;
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(44, 62, 143, 0.3);
 }
 
 .send-button:disabled {
-    opacity: 0.5;
+    background: var(--bg-tertiary);
+    color: var(--text-tertiary);
     cursor: not-allowed;
+    transform: scale(0.95);
+}
+
+.send-button svg {
+    margin-left: -2px;
+    /* Visual optical adjustment */
+    margin-top: 2px;
 }
 
 /* Loading */
@@ -837,4 +885,116 @@ body {
     .message-content {
         max-width: 85%;
     }
+}
+
+/* Modal Styles */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    backdrop-filter: blur(2px);
+}
+
+.modal-content {
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    padding: 24px;
+    width: 90%;
+    max-width: 400px;
+    border: 1px solid var(--border-color);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    animation: modalSlideIn 0.2s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.modal-header h3 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.close-button {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0 4px;
+    line-height: 1;
+}
+
+.close-button:hover {
+    color: var(--text-primary);
+}
+
+.modal-body {
+    margin-bottom: 24px;
+}
+
+.modal-body p {
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.5;
+}
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.btn-secondary {
+    background-color: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.btn-secondary:hover {
+    background-color: var(--hover-bg);
+}
+
+.btn-primary-danger {
+    background-color: #ef4444;
+    border: none;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: all 0.2s;
+}
+
+.btn-primary-danger:hover {
+    background-color: #dc2626;
 }

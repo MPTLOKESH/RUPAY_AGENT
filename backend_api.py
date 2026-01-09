@@ -5,6 +5,7 @@ from typing import List, Dict, Any
 import pandas as pd
 from sqlalchemy import create_engine
 from main_orchestraion import MainOrchestrator, DB_CONFIG
+from core.redis_client import save_message, get_history as get_redis_history, clear_history
 import uvicorn
 
 # Initialize FastAPI app
@@ -32,6 +33,7 @@ db_url = f"postgresql://{DB_CONFIG['user']}:{DB_CONFIG['password']}@{DB_CONFIG['
 # Pydantic models for request/response validation
 class ChatRequest(BaseModel):
     message: str
+    session_id: str = None
     history: List[Dict[str, str]] = []
 
 class ChatResponse(BaseModel):
@@ -49,19 +51,55 @@ async def chat(request: ChatRequest):
     Handle chat messages from the frontend
     
     - **message**: User's message to the AI agent
-    - **history**: Previous conversation history
+    - **session_id**: Unique session ID for persistent history
+    - **history**: Previous conversation history (optional, used if session_id not provided)
     """
     try:
         if not request.message:
             raise HTTPException(status_code=400, detail="Message is required")
         
+        # Determine history source
+        conversation_history = request.history
+        if request.session_id:
+            # Fetch history from Redis
+            redis_history = get_redis_history(request.session_id)
+            if redis_history:
+                conversation_history = redis_history
+        
         # Get response from the orchestrator
-        response = orchestrator.chat(request.message, request.history)
+        # Note: orchestrator expects history of previous turns
+        response = orchestrator.chat(request.message, conversation_history)
+        
+        # Save to Redis if session_id is active
+        if request.session_id:
+            save_message(request.session_id, "user", request.message)
+            save_message(request.session_id, "assistant", response)
         
         return ChatResponse(response=response)
     
     except HTTPException:
         raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/history/{session_id}", response_model=List[Dict[str, str]])
+async def get_chat_history(session_id: str):
+    """
+    Retrieve chat history for a specific session
+    """
+    try:
+        return get_redis_history(session_id)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.delete("/api/history/{session_id}")
+async def clear_chat_history(session_id: str):
+    """
+    Clear chat history for a specific session
+    """
+    try:
+        clear_history(session_id)
+        return {"status": "success", "message": "History cleared"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
