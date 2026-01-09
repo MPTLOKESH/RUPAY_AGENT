@@ -8,6 +8,7 @@ from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
 from agents.agent_transaction import TransactionAgent
 from agents.agent_rag import RAGAgent
 from core.prompt_template import get_orchestrator_prompt
+from core.guardrail_loader import load_guardrail_data
 
 # ==========================================
 # 1. CONFIGURATION
@@ -26,6 +27,7 @@ DB_CONFIG = {
 
 # File Paths
 MAPPING_FILE = "data/desc_mapping.json"
+GUARDRAIL_FILE = "data/guardrails_all_questions_1.txt"
 TRAIN_FILE = "data/rupay_sft_2.json" # <--- Updated to RuPay Training Data
 
 # ==========================================
@@ -39,6 +41,9 @@ class MainOrchestrator:
         # 1. Initialize Workers
         self.tx_worker = TransactionAgent(DB_CONFIG, MAPPING_FILE)
         self.rag_worker = RAGAgent()
+
+        # 1b. Load Guardrails
+        self.guardrail_data = load_guardrail_data(GUARDRAIL_FILE)
         
         # 2. Initialize LLM
         self.llm = ChatOpenAI(
@@ -49,8 +54,8 @@ class MainOrchestrator:
         )
         
         # 3. Generate Smart Prompt (In-Context Learning)
-        # This reads your RuPay JSON file and creates the routing logic
-        self.system_prompt = get_orchestrator_prompt(TRAIN_FILE)
+        # Pass loaded guardrails to dynamic prompt
+        self.system_prompt = get_orchestrator_prompt(TRAIN_FILE, self.guardrail_data)
         print("[Main] System Prompt Loaded with RuPay Context.")
 
     def chat(self, user_query, history=None):
@@ -134,19 +139,17 @@ class MainOrchestrator:
                     # Guardrails - Return Specific Refusal
                     category = params.get("category", "General")
                     
-                    # Refusal Messages from User's Policy
-                    refusals = {
-                        "Harassment": "Sorry, but I can’t assist with activities that involve harassing others. It’s crucial to respect others’ personal space and privacy.",
-                        "Terrorism": "I’m sorry, but I can’t provide guidance or assist with actions related to terrorism.",
-                        "Personal Data Violation": "Apologies, but I can’t help with actions that violate personal data. It’s important to respect privacy.",
-                        "Misinformation": "Sorry, I can’t assist with spreading misinformation. It’s essential to promote truthful and accurate information.",
-                        "Extortion & Blackmail": "Sorry, but I can’t assist with activities involving extortion or blackmail. It’s illegal and harmful.",
-                        "Cyberattacks / Hacking": "Sorry, but I can’t assist with hacking, cyberattacks, or any activity that compromises systems or data.",
-                        "Human Trafficking": "I’m sorry, but I can’t provide information or assistance related to human trafficking. It’s illegal and harmful.",
-                        "Dangerous Instructions": "I cannot assist with the creation of weapons or dangerous substances."
-                    }
+                    # Refusal Messages from User's Policy (Loaded from File)
+                    if hasattr(self, 'guardrail_data') and self.guardrail_data:
+                        # Normalize category matching (Title Case)
+                        search_cat = category.replace("_", " ").title()
+                        
+                        # Use loaded message or fallback
+                        worker_result = self.guardrail_data.get(search_cat, "I cannot assist with that request due to safety guidelines.")
+                    else:
+                        worker_result = "I cannot assist with that request due to safety guidelines."
                     
-                    return refusals.get(category, "I cannot assist with that request due to safety guidelines.")
+                    return worker_result
 
                 elif target == "reject":
                     # Irrelevant Query

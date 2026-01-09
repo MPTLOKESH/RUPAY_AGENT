@@ -1,22 +1,18 @@
 import json
 
-def get_orchestrator_prompt(training_data_path):
+def get_orchestrator_prompt(training_data_path, guardrail_data=None):
     """
     Generates the System Prompt for the Main Agent using In-Context Learning.
-
-    1. It reads your 'rupay_mixed_training_data.jsonl' (or similar) to find a REAL transaction conversation.
-    2. It formats that real conversation into the 'Orchestrator JSON' format.
-    3. It appends a synthetic RAG example.
-
-    This ensures the model follows your data's style but outputs the specific
-    JSON routing commands we need.
+    
+    Args:
+        training_data_path (str): Path to transaction training examples.
+        guardrail_data (dict): Optional. Dictionary of {Category: RefusalMessage}.
     """
     txn_example_str = ""
 
     # --- PART 1: LOAD REAL TRANSACTION EXAMPLE ---
     try:
         # Handling JSONL or JSON list format
-        examples = []
         with open(training_data_path, "r", encoding="utf-8") as f:
             first_char = f.read(1)
             f.seek(0)
@@ -93,8 +89,13 @@ def get_orchestrator_prompt(training_data_path):
                 break  # Stop after finding 1 good example
 
         if not found_example:
-            print("[PromptTemplate] No tool calls found in data file. Using fallback.")
-            raise Exception("Data validation failed")
+            txn_example_str = (
+                "Example 1 (Specific Transaction):\n"
+                "User: I tried to withdraw 5000 rupees on 2025-05-10 around 10 AM. Card ending 4455.\n"
+                "Assistant: ```json\n"
+                '{"target": "tool_agent", "parameters": {"date": "2025-05-10", "amount": 5000, "card_last_4": "4455", "approx_time": "10:00"}}\n'
+                "```\n"
+            )
 
     except Exception as e:
         # --- FALLBACK EXAMPLE (RuPay Specific) ---
@@ -117,6 +118,22 @@ def get_orchestrator_prompt(training_data_path):
         "Assistant: Yes, you can use RuPay Global cards internationally. They are accepted wherever Discover or JCB cards are supported.\n"
     )
 
+    # Generate Categories List dynamically
+    if guardrail_data:
+        categories_list = "\n".join([f"      - {cat}" for cat in guardrail_data.keys()])
+    else:
+        # Fallback if no file loaded
+        categories_list = (
+            "      - Harassment\n"
+            "      - Terrorism\n"
+            "      - Personal Data Violation\n"
+            "      - Misinformation\n"
+            "      - Extortion & Blackmail\n"
+            "      - Cyberattacks / Hacking\n"
+            "      - Human Trafficking\n"
+            "      - Dangerous Instructions"
+        )
+
     # --- PART 3: COMBINE INTO SYSTEM PROMPT ---
     SYSTEM_PROMPT = f"""You are the RuPay Support Agent.
 Your job is to route user requests to the correct worker agent.
@@ -131,14 +148,7 @@ WORKERS AVAILABLE:
 
 3. `guardrail_agent`: Use for UNSAFE or PROHIBITED topics.
    - Categories:
-     - Harassment
-     - Terrorism
-     - Personal Data Violation
-     - Misinformation
-     - Extortion & Blackmail
-     - Cyberattacks / Hacking
-     - Human Trafficking
-     - Dangerous Instructions
+{categories_list}
    - Required Parameters: category (one of the above).
 
 4. `identity_agent`: Use for GREETINGS and QUESTIONS ABOUT THE AGENT.
