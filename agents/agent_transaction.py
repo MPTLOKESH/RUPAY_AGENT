@@ -122,7 +122,7 @@ class TransactionAgent:
 
             return json.dumps({
                 "date": str(row.tstamp_trans),
-                "amount": int(row.amt),
+                "amount": f"{int(row.amt):,}", # formatted as string with commas (e.g., "43,402")
                 "status": "Failed" if row.reason_code != "00" else "Success",
                 "reason_code": str(row.reason_code),
                 "error_reason": details["description"],

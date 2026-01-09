@@ -5,6 +5,7 @@ import ChatMessage from './components/ChatMessage';
 import ChatInput from './components/ChatInput';
 import { sendMessage, getHistory, clearHistory } from './services/api';
 import ConfirmationModal from './components/ConfirmationModal';
+import WelcomeScreen from './components/WelcomeScreen';
 
 const STORAGE_KEY = 'rupay_chat_sessions'; // Renamed to reflect it stores sessions, not full history
 
@@ -104,7 +105,7 @@ function App() {
         };
 
         // Add default greeting locally
-        newChat.messages = [{ role: 'assistant', content: 'Hello! I am RuPay Agent, your AI-powered transaction assistant. How can I help you today?' }];
+        newChat.messages = [];
 
         if (returnIdOnly) {
             setChats(prev => [newChat, ...prev]);
@@ -137,7 +138,7 @@ function App() {
             const newChat = {
                 id: Date.now().toString(),
                 timestamp: Date.now(),
-                messages: [{ role: 'assistant', content: 'Hello! I am RuPay Agent, your AI-powered transaction assistant. How can I help you today?' }]
+                messages: []
             };
             setChats([newChat]);
             setActiveChat(newChat.id);
@@ -152,9 +153,8 @@ function App() {
         const newChat = {
             id: Date.now().toString(),
             timestamp: Date.now(),
-            messages: [
-                { role: 'assistant', content: 'Hello! I am RuPay Agent, your AI-powered transaction assistant. How can I help you today?' }
-            ]
+            title: 'New Chat',
+            messages: []
         };
         setChats([newChat]);
         setActiveChat(newChat.id);
@@ -235,9 +235,15 @@ function App() {
                 <div className="main-content">
                     <div className="chat-container">
                         <div className="chat-messages">
-                            {messages.map((msg, index) => (
-                                <ChatMessage key={index} message={msg} />
-                            ))}
+                            {messages.length === 0 ? (
+                                <WelcomeScreen onSuggestionClick={handleSendMessage} />
+                            ) : (
+                                <>
+                                    {messages.map((msg, index) => (
+                                        <ChatMessage key={index} message={msg} />
+                                    ))}
+                                </>
+                            )}
                             {loading && (
                                 <div className="message assistant">
                                     <div className="message-avatar">
