@@ -3,32 +3,77 @@ import Header from './components/Header';
 import ChatHistory from './components/ChatHistory';
 import ChatMessage from './components/ChatMessage';
 import ChatInput from './components/ChatInput';
-import { sendMessage } from './services/api';
+import { sendMessage, getHistory, clearHistory } from './services/api';
+import ConfirmationModal from './components/ConfirmationModal';
 
-const STORAGE_KEY = 'rupay_chat_history';
+const STORAGE_KEY = 'rupay_chat_sessions'; // Renamed to reflect it stores sessions, not full history
 
 function App() {
     const [chats, setChats] = useState([]);
     const [activeChat, setActiveChat] = useState(null);
     const [loading, setLoading] = useState(false);
+    const [isClearModalOpen, setIsClearModalOpen] = useState(false);
     const messagesEndRef = useRef(null);
+    const initializedRef = useRef(false);
 
     // Initialize chats from localStorage or create first chat
     useEffect(() => {
-        const savedChats = localStorage.getItem(STORAGE_KEY);
-        if (savedChats) {
-            const parsedChats = JSON.parse(savedChats);
-            setChats(parsedChats);
-            setActiveChat(parsedChats[0]?.id || null);
-        } else {
-            createNewChat();
-        }
+        const loadInitialChats = async () => {
+            if (initializedRef.current) return;
+            initializedRef.current = true;
+
+            const savedChats = localStorage.getItem(STORAGE_KEY);
+            let initialChatId = null;
+
+            if (savedChats) {
+                const parsedChats = JSON.parse(savedChats);
+                // We only need the metadata (ids), messages will be fetched
+                setChats(parsedChats.map(c => ({ ...c, messages: [] })));
+                initialChatId = parsedChats[0]?.id;
+            } else {
+                initialChatId = createNewChat(true); // pass flag to indicate return only
+            }
+
+            if (initialChatId) {
+                setActiveChat(initialChatId);
+                await fetchChatHistory(initialChatId);
+            }
+        };
+        loadInitialChats();
     }, []);
 
-    // Save chats to localStorage whenever they change
+    const fetchChatHistory = async (chatId) => {
+        setLoading(true);
+        try {
+            const history = await getHistory(chatId);
+            // Convert backend history format to frontend format [ {role, content} ]
+            // Backend returns list of dicts {role, content} which matches frontend
+            setChats(prev => prev.map(chat =>
+                chat.id === chatId
+                    ? { ...chat, messages: history || [] }
+                    : chat
+            ));
+        } catch (error) {
+            console.error("Failed to load history", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // When active chat changes, fetch history if empty (or always to sync?)
+    // For now, let's fetch on select to ensure fresh data
+    useEffect(() => {
+        if (activeChat) {
+            fetchChatHistory(activeChat);
+        }
+    }, [activeChat]);
+
+    // Save chats METADATA to localStorage (excluding messages to keep it light/synced with source of truth)
     useEffect(() => {
         if (chats.length > 0) {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(chats));
+            // Strip messages before saving to local storage
+            const chatsMetadata = chats.map(({ messages, ...rest }) => ({ ...rest, messages: [] }));
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(chatsMetadata));
         }
     }, [chats]);
 
@@ -40,11 +85,13 @@ function App() {
         return chats.find(chat => chat.id === activeChat);
     };
 
-    const createNewChat = () => {
+    const createNewChat = (returnIdOnly = false) => {
         // Check if there's already an empty chat (only has the initial greeting)
-        const existingEmptyChat = chats.find(chat => chat.messages.length === 1 && chat.messages[0].role === 'assistant');
+        // Note: With Redis, "empty" means no history. 
+        // We'll trust local state for "empty" check for now, or just create new
+        const existingEmptyChat = chats.find(chat => chat.messages.length === 0 || (chat.messages.length === 1 && chat.messages[0].role === 'assistant'));
 
-        if (existingEmptyChat) {
+        if (existingEmptyChat && !returnIdOnly) {
             setActiveChat(existingEmptyChat.id);
             return;
         }
@@ -52,10 +99,18 @@ function App() {
         const newChat = {
             id: Date.now().toString(),
             timestamp: Date.now(),
-            messages: [
-                { role: 'assistant', content: 'Hello! I am RuPay Agent, your AI-powered transaction assistant. How can I help you today?' }
-            ]
+            messages: []
+            // We initiate with empty. Backend/Frontend default greeting logic can be handled by UI
         };
+
+        // Add default greeting locally
+        newChat.messages = [{ role: 'assistant', content: 'Hello! I am RuPay Agent, your AI-powered transaction assistant. How can I help you today?' }];
+
+        if (returnIdOnly) {
+            setChats(prev => [newChat, ...prev]);
+            return newChat.id;
+        }
+
         setChats(prev => [newChat, ...prev]);
         setActiveChat(newChat.id);
     };
@@ -66,30 +121,45 @@ function App() {
 
     const deleteChat = (chatId) => {
         const updatedChats = chats.filter(chat => chat.id !== chatId);
-        setChats(updatedChats);
 
-        if (chatId === activeChat) {
-            if (updatedChats.length > 0) {
+        // Clear from Redis
+        clearHistory(chatId);
+
+        if (updatedChats.length > 0) {
+            setChats(updatedChats);
+            // If the deleted chat was the active one, switch to the first available
+            if (chatId === activeChat) {
                 setActiveChat(updatedChats[0].id);
-            } else {
-                createNewChat();
             }
-        }
-    };
-
-    const clearAllChats = () => {
-        if (window.confirm('Are you sure you want to delete all chat history?')) {
+        } else {
+            // If no chats left, create a fresh one immediately explicitly
+            // We don't use createNewChat() here to avoid reading stale 'chats' state
             const newChat = {
                 id: Date.now().toString(),
                 timestamp: Date.now(),
-                messages: [
-                    { role: 'assistant', content: 'Hello! I am RuPay Agent, your AI-powered transaction assistant. How can I help you today?' }
-                ]
+                messages: [{ role: 'assistant', content: 'Hello! I am RuPay Agent, your AI-powered transaction assistant. How can I help you today?' }]
             };
             setChats([newChat]);
             setActiveChat(newChat.id);
-            localStorage.removeItem(STORAGE_KEY);
         }
+    };
+
+    const confirmClearAllChats = () => {
+        setIsClearModalOpen(true);
+    };
+
+    const handleClearConfirm = () => {
+        const newChat = {
+            id: Date.now().toString(),
+            timestamp: Date.now(),
+            messages: [
+                { role: 'assistant', content: 'Hello! I am RuPay Agent, your AI-powered transaction assistant. How can I help you today?' }
+            ]
+        };
+        setChats([newChat]);
+        setActiveChat(newChat.id);
+        localStorage.removeItem(STORAGE_KEY);
+        setIsClearModalOpen(false);
     };
 
     const updateChatMessages = (chatId, newMessages) => {
@@ -133,8 +203,13 @@ function App() {
             */
 
             // API Call to backend
-            const response = await sendMessage(userMessage, newMessages);
-            updateChatMessages(activeChat, [...newMessages, { role: 'assistant', content: response }]);
+            // Pass activeChat as sessionId
+            const response = await sendMessage(userMessage, activeChat);
+
+            // Response from backend includes response string
+            // We need to re-fetch history or just append? 
+            // Appending is smoother.
+            updateChatMessages(activeChat, [...newMessages, { role: 'assistant', content: response.response }]);
         } catch (error) {
             updateChatMessages(activeChat, [...newMessages, { role: 'assistant', content: `Error: ${error.message}` }]);
         } finally {
@@ -155,7 +230,7 @@ function App() {
                     onNewChat={createNewChat}
                     onSelectChat={selectChat}
                     onDeleteChat={deleteChat}
-                    onClearAll={clearAllChats}
+                    onClearAll={confirmClearAllChats}
                 />
                 <div className="main-content">
                     <div className="chat-container">
@@ -183,11 +258,18 @@ function App() {
                             )}
                             <div ref={messagesEndRef} />
                         </div>
-                        <ChatInput onSend={handleSendMessage} disabled={loading} />
+                        <ChatInput key={activeChat} onSend={handleSendMessage} disabled={loading} />
                     </div>
                 </div>
 
             </div>
+            <ConfirmationModal
+                isOpen={isClearModalOpen}
+                onClose={() => setIsClearModalOpen(false)}
+                onConfirm={handleClearConfirm}
+                title="Clear All History"
+                message="Are you sure you want to delete all chat history? This action cannot be undone."
+            />
         </>
     );
 }
