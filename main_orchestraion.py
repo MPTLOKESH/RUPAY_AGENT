@@ -159,26 +159,36 @@ class MainOrchestrator:
                 print(f"[System] Worker Output: {worker_result}")
                 
                 # --- STEP 4: Final Synthesis ---
-                # Feed the tool output back to the LLM to generate a natural language response
-                messages.append(AIMessage(content=content))
+                # Use a FRESH context to break the "Output JSON" instruction from the System Prompt
                 
-                # CRITICAL: We explicitly ask for Natural Language to override the System Prompt's JSON rule
-                prompt_text = (
-                    f"Worker Output: {worker_result}\n\n"
+                # Restoring the original detailed instructions as requested
+                prompt_instructions = (
                     "IMPORTANT INSTRUCTIONS:\n"
                     "1. IGNORE previous JSON output requirements. You MUST respond in plain text.\n"
-                    "2. PRIVACY: Do NOT reveal the 'Reason Code' (e.g., 91) or 'Card Number' (e.g., 1234).\n"
-                    "3. CONTEXT CHECK: Check History. If confirmed, proceed to explanation.\n"
-                    "4. CONFIRMATION: If NEW lookup, ask: 'I found a transaction of [Exact Amount] at [Exact Time]. Is this the one?'\n"
-                    "5. PERSONA: Act as a warm, human Customer Support Agent. \n"
+                    "2. SECURITY & PRIVACY: NEVER reveal the full Card Number, internal 'Reason Code' (e.g., 91), or raw 'Description'.\n"
+                    "3. NO TECHNICAL JARGON: Do NOT show database column names, error codes, or system logs to the user. This is a security risk.\n"
+                    "4. CONTEXT CHECK: Check History. Only if confirmed, proceed to explanation.\n"
+                    "5. CONFIRMATION FLOW:\n"
+                    "   - If NEW lookup found multiple or exact match, ask: 'I found a transaction of [Exact Amount] at [Exact Time]. Is this the one?'\n"
+                    "   - If User says NO: Apologize and ask for clearer details (exact date, time, amount).\n"
+                    "   - If User says YES: Proceed to answer specific questions or explain the status for THAT transaction.\n"
+                    "6. PERSONA: Act as a warm, human Customer Support Agent. \n"
                     "   - DO NOT format your response like a system report (e.g., avoid 'Date: ... Status: ...').\n"
-                    "   - DO NOT say 'The system returned...' or 'Unknown Response Code'.\n"
-                    "   - Explain the issue in plain English accurately based on the 'suggested_message'.\n"
-                    "   - Example: 'I see the transaction failed because of a network timeout. Don't worry, your money is safe.'\n"
+                    "   - Explain the issue in simple English based on the 'suggested_message'.\n"
+                    "   - Example: 'I see the transaction failed because of a network timeout.'\n"
                 )
-                messages.append(HumanMessage(content=prompt_text))
+
+                synthesis_messages = [
+                    SystemMessage(content=(
+                        "You are a helpful and warm RuPay AI Customer Support Agent. "
+                        "Your goal is to answer the user's question based on the provided system data. "
+                        f"{prompt_instructions}"
+                    )),
+                    HumanMessage(content=f"User Query: {user_query}"),
+                    HumanMessage(content=f"Worker Output: {worker_result}")
+                ]
                 
-                final_response = self.llm.invoke(messages)
+                final_response = self.llm.invoke(synthesis_messages)
                 final_content = final_response.content
 
                 # Final Safeguard: If output still looks like JSON, return a friendly error

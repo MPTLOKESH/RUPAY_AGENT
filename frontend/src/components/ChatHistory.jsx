@@ -163,15 +163,7 @@ function ChatHistory({ chats, activeChat, onNewChat, onSelectChat, onDeleteChat,
                     )}
                 </button>
 
-                <div className="user-profile">
-                    <div className="user-avatar">RP</div>
-                    {!isCollapsed && (
-                        <div className="user-details">
-                            <span className="user-name">RuPay Agent</span>
-                            <span className="user-role">Banking Assistant</span>
-                        </div>
-                    )}
-                </div>
+
             </div>
         </div>
     );
