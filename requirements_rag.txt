@@ -1,0 +1,23 @@
+# RAG System Requirements
+
+# Core RAG dependencies
+sentence-transformers>=2.2.0
+faiss-cpu>=1.7.4
+tiktoken>=0.5.0
+pypdf>=3.17.0
+
+# Already installed (keeping for reference)
+# google-generativeai
+# numpy
+# python-dotenv
+
+# API dependencies (already in requirements_api.txt)
+# fastapi
+# uvicorn[standard]
+# pydantic
+# pandas
+# psycopg2-binary
+# sqlalchemy
+# openpyxl
+# python-multipart
+# redis
