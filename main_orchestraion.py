@@ -88,7 +88,38 @@ class MainOrchestrator:
                 content = content.replace("```json", "").replace("```", "").strip()
             
         except Exception as e:
-            return f"❌ System Error (LLM Invoke): {str(e)}"
+            error_msg = str(e).lower()
+            print(f"[ERROR] LLM Invoke failed: {str(e)}")
+            
+            # Smart fallback routing based on query content
+            query_lower = user_query.lower()
+            
+            # Check for common patterns and route appropriately
+            if any(word in query_lower for word in ['upi', 'nach', 'imps', 'rtgs', 'neft', 'visa', 'mastercard']):
+                # Non-RuPay transaction
+                return "I can only assist with RuPay transaction issues and general banking queries."
+            
+            elif any(word in query_lower for word in ['transaction', 'failed', 'txn', 'payment', 'withdrawal', 'deposit']):
+                # Likely transaction query - ask for details
+                return "I can help you check your failed transaction. Please provide: date, amount, card last 4 digits, and approximate time."
+            
+            elif any(word in query_lower for word in ['what', 'how', 'when', 'why', 'benefit', 'limit', 'card', 'rupay']):
+                # Likely general question - route to RAG
+                try:
+                    worker_result = self.rag_worker.execute({"query": user_query})
+                    # Parse RAG response
+                    import json
+                    rag_data = json.loads(worker_result)
+                    if rag_data.get('answer'):
+                        return rag_data['answer']
+                    elif rag_data.get('chunks'):
+                        return rag_data['chunks'][0] if rag_data['chunks'] else "I couldn't find specific information about that."
+                except:
+                    return "I'm experiencing technical difficulties. Could you rephrase your question?"
+            
+            else:
+                # Generic fallback
+                return "I apologize, but I'm experiencing technical difficulties. I can assist with RuPay transaction issues or answer questions about RuPay services. Please try rephrasing your query."
         
         # --- STEP 2: Check for JSON Command ---
         # Robust Strategy: Find first '{' and last '}'
