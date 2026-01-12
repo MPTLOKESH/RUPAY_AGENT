@@ -55,6 +55,14 @@ class TransactionAgent:
                 # Fallback if parser fails
                 user_dt = datetime.strptime(f"{date} {approx_time}", "%Y-%m-%d %H:%M")
 
+            # --- Logic: Future Date Check ---
+            if user_dt > datetime.now():
+                return json.dumps({
+                    "response_code": "99", 
+                    "description": "Invalid Date (Future)", 
+                    "agent_message": f"The date and time you provided ({user_dt.strftime('%Y-%m-%d %I:%M %p')}) is in the future. Please provide a correct date and time."
+                })
+
             # Define initial window (+/- 1 Hour)
             start_dt = user_dt - timedelta(hours=1)
             end_dt = user_dt + timedelta(hours=1)

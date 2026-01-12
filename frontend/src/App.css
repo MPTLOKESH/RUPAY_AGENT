@@ -99,6 +99,22 @@ body {
     -webkit-font-smoothing: antialiased;
     overflow: hidden;
     /* Prevent body scroll, let app container handle it */
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Professional Theme Transition for key elements */
+.header,
+.chat-history,
+.main-content,
+.chat-input-wrapper,
+.message-content,
+.theme-btn,
+.chat-history-item,
+.user-avatar,
+.new-chat-button,
+.sidebar-toggle,
+.clear-history-btn {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 /* Custom Scrollbar */
