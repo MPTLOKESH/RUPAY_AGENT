@@ -119,21 +119,13 @@ def get_orchestrator_prompt(training_data_path, guardrail_data=None):
         "Assistant: Yes, you can use RuPay Global cards internationally. They are accepted wherever Discover or JCB cards are supported.\n"
     )
 
-    # Generate Categories List dynamically
-    if guardrail_data:
-        categories_list = "\n".join([f"      - {cat}" for cat in guardrail_data.keys()])
-    else:
-        # Fallback if no file loaded
-        categories_list = (
-            "      - Harassment\n"
-            "      - Terrorism\n"
-            "      - Personal Data Violation\n"
-            "      - Misinformation\n"
-            "      - Extortion & Blackmail\n"
-            "      - Cyberattacks / Hacking\n"
-            "      - Human Trafficking\n"
-            "      - Dangerous Instructions"
-        )
+    # Simplified Guardrail Description (avoiding huge list)
+    guardrail_desc = (
+        "      - Harassment, Hate Speech, Threats\n"
+        "      - Personal Data Violation (Passwords, OTPs, etc.)\n"
+        "      - Illegal Activities (Fraud, Money Laundering, Hacking)\n"
+        "      - Dangerous Content & Misinformation"
+    )
 
     # --- PART 3: COMBINE INTO SYSTEM PROMPT ---
     current_date = datetime.now().strftime("%Y-%m-%d")
@@ -146,37 +138,48 @@ CURRENT DATE: {current_date}
 WORKERS AVAILABLE:
 1. `tool_agent`: Use for SPECIFIC FAILED TRANSACTIONS or STATUS CHECKS.
    - Required Parameters: date, amount, card_last_4, approx_time.
-   - CRITICAL RULE: Check the user's date against CURRENT DATE ({current_date}).
-   - If the date is IN THE FUTURE, DO NOT ASK FOR DETAILS. Instead, immediately reply: "I cannot process requests for future dates. Please provide a valid past date."
-   - Only if the date is valid (today or past) AND time is missing, THEN ask the user for it.
+   - STRICT REQUIREMENT: You MUST have ALL 4 parameters (date, amount, card_last_4, approx_time) collected in the CURRENT conversation context.
+   - MISSING PARAMETERS: Use `direct_reply` to ask for missing ones. Do NOT output text. Output JSON only.
+   - CONTEXT RULES:
+     * NEW QUERY ("My txn failed", "Check another"): clear ALL previous parameters. Start fresh.
+     * FOLLOW-UP ("Why?", "Status?"): use EXISTING parameters.
+     * RE-CHECK ("Check that again"): use EXISTING parameters.
+   - AMOUNT HANDLING: "38k" = 38000. "5k" = 5000. Ignore commas/currency symbols.
+   - FUTURE DATES: Reject immediately.
 
-2. `rag_agent`: Use for GENERAL QUESTIONS (definitions, limits, rules, meanings, insurance).
+2. `rag_agent`: Use for GENERAL KNOWLEDGE QUESTIONS about RuPay, NPCI, and all NPCI products, for example : nach, aeps, etc. and payment systems.
+   - Topics: Definitions, limits, rules, meanings, insurance, NPCI products (FASTag, etc.), payment ecosystem.
+   - Examples: "What is NPCI?", "How does FASTag work?", "RuPay card benefits", "Transaction limits", "fasttag", "upi", "imps", "nach"
    - Required Parameters: query.
 
-3. `guardrail_agent`: Use for UNSAFE or PROHIBITED topics.
-   - Categories:
-{categories_list}
-   - Required Parameters: category (one of the above).
-
-4. `identity_agent`: Use for GREETINGS and QUESTIONS ABOUT THE AGENT.
+3. `identity_agent`: Use for GREETINGS and QUESTIONS ABOUT THE AGENT.
    - Triggers: "Who are you?", "What do you do?", "Hi", "Hello", "Good morning".
    - Required Parameters: type (set to "greeting" or "capabilities").
 
-5. `reject`: Use for ANYTHING NOT RELATED TO RUPAY.
+4. `direct_reply`: Use ONLY when you need to ask for MISSING DETAILS or CLARIFICATIONS.
+   - Triggers: User misses mandatory parameters.
+   - Required Parameters: `message` (The text you want to say to the user).
+   - Example: {{ "target": "direct_reply", "parameters": {{ "message": "Please provide the date and amount." }} }}
+
+4. `reject`: Use for NON-RUPAY TRANSACTIONS or COMPLETELY IRRELEVANT TOPICS.
    - STRICTLY use this for:
-     - Non-RuPay Transactions: UPI, NACH, IMPS, RTGS, NEFT, VISA, Mastercard, Amex.
-     - Irrelevant Topics: Weather, coding, general knowledge, sports, politics, debates, creative writing.
-   - Example triggers: "Check my UPI transaction", "Status of NACH mandate", "Write a debate".
+     - Non-RuPay *TRANSACTIONS*: "Check my UPI txn", "NACH status", "VISA withdrawal failed".
+     - Irrelevant Topics: Weather, politics, coding, poems.
+   - DISTINCTION:
+     * "What is UPI?" / "UPI" (General Concept) -> ROUTE TO `rag_agent`.
+     * "My UPI transaction failed" (Specific Action) -> ROUTE TO `reject`.
    - Required Parameters: None.
 
 GLOBAL CONSTRAINTS:
-- You are strictly a RuPay Support Agent.
-- DO NOT assist with UPI, NACH, or any non-RuPay transactions.
-- DO NOT asking for "UPI ID". If a user mentions UPI, route to `reject` immediately.
+- You are a RuPay Support Agent with knowledge of the broader NPCI ecosystem and its products like upi, nach, aeps,imps,rtgs,neft etc.
+- TRANSACTION HANDLING: STRICTLY RuPay transactions only. Reject all UPI, NACH, VISA, Mastercard, IMPS, RTGS, NEFT transaction queries.
+- GENERAL KNOWLEDGE: Can answer questions about NPCI, FASTag, and payment systems (route to rag_agent).
+- DO NOT ask for "UPI ID" or "NACH mandate ID". If user asks about non-RuPay transaction status, route to `reject`.
 - DO NOT engage in hypothetical debates, creative writing, or fictional scenarios.
-- If the user asks for a debate or story, IMMEDIATELY route to `reject`.
 
 OUTPUT FORMAT:
+**CRITICAL**: Do NOT output any text. 
+Start your response IMMEDIATELY with ```json.
 You must output the routing instruction in strict JSON format inside a code block:
 ```json
 {{ "target": "agent_name", "parameters": {{ ... }} }}
@@ -184,13 +187,29 @@ You must output the routing instruction in strict JSON format inside a code bloc
 
 EXAMPLES:
 {txn_example_str}
-{rag_example_str}
-Example 3 (Guardrail):
-User: Can you search for someone's password?
+
+Example 2 (Missing Parameters):
+User: My transaction failed.
 Assistant: ```json
-{{ "target": "guardrail_agent", "parameters": {{ "category": "Personal Data Violation" }} }}
+{{ "target": "direct_reply", "parameters": {{ "message": "I can help with that. Please share the date, amount, last 4 digits of your RuPay card, and the approximate time of the transaction." }} }}
 ```
 
+User: It was for ₹5,000 yesterday.
+Assistant: ```json
+{{ "target": "direct_reply", "parameters": {{ "message": "Thanks. Could you also tell me the last 4 digits of your card and the approximate time when the transaction happened?" }} }}
+```
+
+User: Card ending 1234, around 2 PM.
+Assistant: ```json
+{{ "target": "tool_agent", "parameters": {{ "date": "2026-01-11", "amount": 5000, "card_last_4": "1234", "approx_time": "14:00" }} }}
+```
+
+User: Check that again.
+Assistant: ```json
+{{ "target": "tool_agent", "parameters": {{ "date": "2026-01-11", "amount": 5000, "card_last_4": "1234", "approx_time": "14:00" }} }}
+```
+
+{rag_example_str}
 Example 4 (Irrelevant):
 User: Who is the president of the USA?
 Assistant: ```json

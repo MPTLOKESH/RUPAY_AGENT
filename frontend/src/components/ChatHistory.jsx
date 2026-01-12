@@ -43,6 +43,8 @@ function ChatHistory({ chats, activeChat, onNewChat, onSelectChat, onDeleteChat,
     }, [chats]);
 
     const getChatTitle = (chat) => {
+        if (chat.title) return chat.title;
+
         if (!chat.messages || chat.messages.length === 0) return 'New Chat';
 
         // Use the first user message as title if available

@@ -5,7 +5,7 @@ from typing import List, Dict, Any
 import pandas as pd
 from sqlalchemy import create_engine
 from main_orchestraion import MainOrchestrator, DB_CONFIG
-from core.redis_client import save_message, get_history as get_redis_history, clear_history
+from core.redis_client import save_message, get_history as get_redis_history, clear_history, save_title, get_title
 import uvicorn
 
 # Initialize FastAPI app
@@ -38,6 +38,7 @@ class ChatRequest(BaseModel):
 
 class ChatResponse(BaseModel):
     response: str
+    title: str = None
 
 class DatabaseResponse(BaseModel):
     data: List[Dict[str, Any]]
@@ -74,21 +75,39 @@ async def chat(request: ChatRequest):
         if request.session_id:
             save_message(request.session_id, "user", request.message)
             save_message(request.session_id, "assistant", response)
-        
-        return ChatResponse(response=response)
+            
+            # Generate and save title if it doesn't exist
+            current_title = get_title(request.session_id)
+            if not current_title:
+                # Generate a simple title from the first message (truncated)
+                # In a real app, you might use an LLM to generate a summary title
+                new_title = request.message[:50] + "..." if len(request.message) > 50 else request.message
+                save_title(request.session_id, new_title)
+                current_title = new_title
+
+        return ChatResponse(response=response, title=current_title)
     
     except HTTPException:
         raise
     except Exception as e:
+        import traceback
+        error_detail = f"Error: {str(e)}\n{traceback.format_exc()}"
+        print(f"[ERROR] Chat endpoint failed: {error_detail}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/api/history/{session_id}", response_model=List[Dict[str, str]])
+
+@app.get("/api/history/{session_id}", response_model=Dict[str, Any])
 async def get_chat_history(session_id: str):
     """
     Retrieve chat history for a specific session
     """
     try:
-        return get_redis_history(session_id)
+        history = get_redis_history(session_id)
+        title = get_title(session_id)
+        return {
+            "history": history,
+            "title": title
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

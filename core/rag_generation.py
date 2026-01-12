@@ -59,24 +59,43 @@ class RAGGeneration:
             print(f"[GENERATION] Temperature: {LLM_TEMPERATURE}")
             print("[GENERATION] Generation pipeline ready.")
     
-    def create_prompt(self, question: str, context: str) -> str:
+    def create_prompt(self, question: str, context: str) -> tuple:
         """
         Create the complete prompt with system instructions.
+        Chooses between strict (RuPay) or flexible (NPCI) prompting.
         
         Args:
             question: User question
             context: Retrieved context
             
         Returns:
-            Formatted prompt
+            Tuple of (prompt, is_npci_query)
         """
-        # Use template from config
-        prompt = SYSTEM_PROMPT_TEMPLATE.format(
-            context=context,
-            question=question
-        )
+        # Import here to avoid circular dependency
+        from core.rag_config import NPCI_KEYWORDS, NPCI_PROMPT_TEMPLATE
         
-        return prompt
+        # Check if this is an NPCI domain question
+        question_lower = question.lower()
+        is_npci_query = any(keyword in question_lower for keyword in NPCI_KEYWORDS)
+        
+        if is_npci_query and (not context or len(context.strip()) < 50):
+            # Use flexible NPCI template when context is insufficient
+            prompt = NPCI_PROMPT_TEMPLATE.format(
+                context=context if context else "No specific documents available.",
+                question=question
+            )
+            if VERBOSE:
+                print("[GENERATION] Using flexible NPCI prompting (allows external knowledge)")
+        else:
+            # Use strict template for RuPay or when context exists
+            prompt = SYSTEM_PROMPT_TEMPLATE.format(
+                context=context,
+                question=question
+            )
+            if VERBOSE:
+                print("[GENERATION] Using strict context-only prompting")
+        
+        return prompt, is_npci_query
     
     def generate_answer(
         self, 
@@ -108,10 +127,11 @@ class RAGGeneration:
             }
         
         # Construct prompt
-        prompt = self.create_prompt(question, context)
+        prompt, is_npci = self.create_prompt(question, context)
         
         if VERBOSE:
             print(f"[GENERATION] Prompt length: {len(prompt)} characters")
+            print(f"[GENERATION] Query type: {'NPCI (flexible)' if is_npci else 'RuPay (strict)'}")
         
         try:
             # Create messages for LangChain
