@@ -87,15 +87,17 @@ function App() {
     };
 
     const createNewChat = (returnIdOnly = false) => {
-        // Check if there's already an empty chat (only has the initial greeting)
-        // Note: With Redis, "empty" means no history. 
-        // We'll trust local state for "empty" check for now, or just create new
-        const existingEmptyChat = chats.find(chat => chat.messages.length === 0 || (chat.messages.length === 1 && chat.messages[0].role === 'assistant'));
+        // Check if the LATEST chat (index 0) is already empty to prevent duplicates
+        if (chats.length > 0) {
+            const latestChat = chats[0];
+            const isEmpty = latestChat.messages.length === 0 || (latestChat.messages.length === 1 && latestChat.messages[0].role === 'assistant');
 
-        if (existingEmptyChat && !returnIdOnly) {
-            setActiveChat(existingEmptyChat.id);
-            return;
+            if (isEmpty && !returnIdOnly) {
+                setActiveChat(latestChat.id);
+                return;
+            }
         }
+
 
         const newChat = {
             id: Date.now().toString(),
