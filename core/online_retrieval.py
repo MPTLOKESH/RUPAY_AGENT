@@ -46,7 +46,8 @@ class OnlineRetrieval:
         # Load embedding model (same as offline)
         if VERBOSE:
             print(f"[ONLINE] Loading embedding model: {EMBEDDING_MODEL_NAME}")
-        self.embedding_model = SentenceTransformer(EMBEDDING_MODEL_NAME)
+        # Use local_files_only=True to prevent HuggingFace download timeouts
+        self.embedding_model = SentenceTransformer(EMBEDDING_MODEL_NAME, local_files_only=True)
         
         # Load FAISS index
         if not os.path.exists(VECTOR_INDEX_FILE):

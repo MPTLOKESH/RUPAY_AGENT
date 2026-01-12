@@ -15,6 +15,7 @@ from core.guardrail_loader import load_guardrail_data
 # ==========================================
 
 MODEL_URL = "http://183.82.7.228:9532/v1"
+# MODEL_URL = "http://183-82-7-228-gemma-12b.loca.lt/v1"
 
 # Database Config (Docker)
 DB_CONFIG = {

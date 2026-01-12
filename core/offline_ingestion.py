@@ -48,7 +48,8 @@ class OfflineIngestion:
         # Load embedding model
         if VERBOSE:
             print(f"[OFFLINE] Loading embedding model: {EMBEDDING_MODEL_NAME}")
-        self.embedding_model = SentenceTransformer(EMBEDDING_MODEL_NAME)
+        # Use local_files_only=True to prevent HuggingFace download timeouts
+        self.embedding_model = SentenceTransformer(EMBEDDING_MODEL_NAME, local_files_only=True)
         
         # Initialize tiktoken encoder for token-based chunking
         self.tokenizer = tiktoken.get_encoding(TIKTOKEN_ENCODING)
