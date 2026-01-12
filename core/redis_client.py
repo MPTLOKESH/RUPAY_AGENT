@@ -49,3 +49,27 @@ def clear_history(session_id: str):
         client.delete(f"chat:{session_id}")
     except Exception as e:
         print(f"Error clearing history: {e}")
+
+def save_title(session_id: str, title: str):
+    """
+    Save the title for a chat session.
+    """
+    try:
+        client = get_redis_client()
+        client.set(f"chat_title:{session_id}", title)
+        # Set expiry to match chat history (30 days)
+        client.expire(f"chat_title:{session_id}", 30 * 24 * 60 * 60)
+    except Exception as e:
+        print(f"Error saving title to Redis: {e}")
+
+def get_title(session_id: str) -> str:
+    """
+    Retrieve the title for a chat session.
+    """
+    try:
+        client = get_redis_client()
+        title = client.get(f"chat_title:{session_id}")
+        return title if title else None
+    except Exception as e:
+        print(f"Error retrieving title from Redis: {e}")
+        return None

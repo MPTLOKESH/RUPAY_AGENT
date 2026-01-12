@@ -56,7 +56,7 @@ LLM_MAX_TOKENS = 1000  # Maximum tokens in generated response
 # Context construction
 MAX_CONTEXT_TOKENS = 3000  # Maximum tokens to send to LLM as context
 
-# System prompt template
+# System prompt template (strict - for RuPay-specific queries)
 SYSTEM_PROMPT_TEMPLATE = """You are a helpful assistant that answers questions ONLY using the provided context.
 
 RULES:
@@ -74,8 +74,26 @@ QUESTION:
 
 ANSWER:"""
 
+# NPCI domain prompt template (flexible - allows external knowledge for NPCI topics)
+NPCI_PROMPT_TEMPLATE = """You are a knowledgeable assistant specializing in NPCI (National Payments Corporation of India) and payment systems.
+
+CONTEXT FROM DOCUMENTS:
+{context}
+
+If the context provides relevant information, use it. However, if the context is insufficient or empty, you may use your general knowledge about NPCI, FASTag, UPI infrastructure, payment systems, and related topics to provide a helpful answer.
+
+Keep answers concise, accurate, and factual.
+
+QUESTION:
+{question}
+
+ANSWER:"""
+
 # Fallback response when no relevant context is found
 NO_CONTEXT_RESPONSE = "I don't have enough information to answer this question."
+
+# NPCI-related keywords for flexible prompting
+NPCI_KEYWORDS = ['npci', 'fastag', 'upi infrastructure', 'nach system', 'imps network', 'payment ecosystem', 'nfs', 'aeps', 'bharat billpay']
 
 # ============================================================================
 # OFFLINE INGESTION CONFIGURATION

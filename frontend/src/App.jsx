@@ -46,12 +46,14 @@ function App() {
     const fetchChatHistory = async (chatId) => {
         setLoading(true);
         try {
-            const history = await getHistory(chatId);
-            // Convert backend history format to frontend format [ {role, content} ]
-            // Backend returns list of dicts {role, content} which matches frontend
+            const data = await getHistory(chatId);
+            // Backend now returns { history: [...], title: "..." }
+            const history = data.history || [];
+            const title = data.title;
+
             setChats(prev => prev.map(chat =>
                 chat.id === chatId
-                    ? { ...chat, messages: history || [] }
+                    ? { ...chat, messages: history, title: title || chat.title || 'New Chat' }
                     : chat
             ));
         } catch (error) {
@@ -208,10 +210,17 @@ function App() {
             // Pass activeChat as sessionId
             const response = await sendMessage(userMessage, activeChat);
 
-            // Response from backend includes response string
-            // We need to re-fetch history or just append? 
-            // Appending is smoother.
-            updateChatMessages(activeChat, [...newMessages, { role: 'assistant', content: response.response }]);
+            // Response from backend includes response string and title
+            setChats(prev => prev.map(chat =>
+                chat.id === activeChat
+                    ? {
+                        ...chat,
+                        messages: [...newMessages, { role: 'assistant', content: response.response }],
+                        timestamp: Date.now(),
+                        title: response.title || chat.title || 'New Chat'
+                    }
+                    : chat
+            ));
         } catch (error) {
             updateChatMessages(activeChat, [...newMessages, { role: 'assistant', content: `Error: ${error.message}` }]);
         } finally {
