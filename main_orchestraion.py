@@ -81,7 +81,7 @@ class MainOrchestrator:
             message = guardrail_result.get("message", "I cannot assist with that request.")
             
             print(f"[Main] ⚠️ Guardrail triggered: {category}")
-            return message
+            return "Sorry, I cannot assist with that request. Please let me know if you have any queries related to RuPay, RuPay transactions, or general NPCI-related topics."
         
         # Query is safe - proceed with normal processing
         print(f"[Main] ✓ Guardrail check passed")
@@ -123,7 +123,7 @@ class MainOrchestrator:
             # Check for common patterns and route appropriately
             if any(word in query_lower for word in ['upi', 'nach', 'imps', 'rtgs', 'neft', 'visa', 'mastercard']):
                 # Non-RuPay transaction
-                return "I can only assist with RuPay transaction issues and general banking queries."
+                return "Sorry, I can only help with RuPay, RuPay transactions, and NPCI-related questions."
             
             elif any(word in query_lower for word in ['transaction', 'failed', 'txn', 'payment', 'withdrawal', 'deposit']):
                 # Likely transaction query - ask for details
@@ -144,7 +144,7 @@ class MainOrchestrator:
             
             else:
                 # Generic fallback
-                return "I apologize, but I'm experiencing technical difficulties. I can assist with RuPay transaction issues or answer questions about RuPay services. Please try rephrasing your query."
+                return "Sorry, I can only help with RuPay, RuPay transactions, and NPCI-related questions."
         
         # --- STEP 2: Check for JSON Command ---
         # Robust Strategy: Find first '{' and last '}'
@@ -197,20 +197,11 @@ class MainOrchestrator:
                     category = params.get("category", "General")
                     
                     # Refusal Messages from User's Policy (Loaded from File)
-                    if hasattr(self, 'guardrail_data') and self.guardrail_data:
-                        # Normalize category matching (Title Case)
-                        search_cat = category.replace("_", " ").title()
-                        
-                        # Use loaded message or fallback
-                        worker_result = self.guardrail_data.get(search_cat, "I cannot assist with that request due to safety guidelines.")
-                    else:
-                        worker_result = "I cannot assist with that request due to safety guidelines."
-                    
-                    return worker_result
+                    return "Sorry, I can only help with RuPay, RuPay transactions, and NPCI-related questions."
 
                 elif target == "reject":
                     # Irrelevant Query
-                    return "I can only assist with RuPay transaction issues and general banking queries."
+                    return "Sorry, I can only help with RuPay, RuPay transactions, and NPCI-related questions."
 
                 elif target == "direct_reply":
                     # Router wants to ask a question directly (e.g. missing params)
@@ -234,8 +225,11 @@ class MainOrchestrator:
                     "   - NEVER reveal the full Card Number, internal 'Reason Code' (e.g., 91), or raw 'Description'.\n"
                     "   - NEVER expose internal system terms, logs, or identifiers.\n"
 
-                    "3. NO TECHNICAL JARGON:\n"
-                    "   - Do NOT show database column names, error codes, or system logs to the user.\n"
+                    "3. NO TECHNICAL JARGON & NO ERROR CODES (STRICT):\n"
+                    "   - You MUST NOT reveal the 'Response Code', 'Reason Code' (e.g., 91, 52, 00), or 'Error Code' to the user under ANY circumstances.\n"
+                    "   - You MUST NOT explain the technical meaning of these codes (e.g., do not say 'Error 91 means switch is inoperative').\n"
+                    "   - Do NOT show database column names like 'tstamp_trans' or 'card_number'.\n"
+                    "   - Use ONLY the 'suggested_message' for the explanation. If the user asks for the code, REFUSE politely and say you don't have access to technical codes, only the status.\n"
                     "   - Use simple, customer-friendly language only.\n"
 
                     "4. DOMAIN PERMISSION (VERY IMPORTANT):\n"
@@ -282,6 +276,16 @@ class MainOrchestrator:
                     "   - Use ONLY Worker Output for transaction-specific details.\n"
                     "   - Use general knowledge ONLY for NPCI domain explanations.\n"
                     "   - NEVER hallucinate, guess, or fabricate transaction data.\n"
+
+                    "11. POSITIVE PRODUCT STANCE (STRICT):\n"
+                    "   - When discussing NPCI products (RuPay, UPI, etc.), focus ONLY on benefits, features, and security.\n"
+                    "   - DO NOT list disadvantages, downsides, or comparisons that make NPCI products look inferior.\n"
+                    "   - Frame limitations (like transaction limits) as 'security measures' to protect the user.\n"
+
+                    "12. EMAIL AND DOCUMENT DRAFTING:\n"
+                    "   - If the user asks to draft an email (e.g., complaint to bank, dispute letter), provide a clear, professional template.\n"
+                    "   - Include placeholders like [Date], [Transaction ID], [Bank Name] for the user to fill in.\n"
+                    "   - Ensure the tone is formal and polite.\n"
                 )
 
 

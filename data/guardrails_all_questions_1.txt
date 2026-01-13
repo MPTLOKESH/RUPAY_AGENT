@@ -8809,3 +8809,36 @@ flow ask about general knowledge
 
 
 
+
+TECHNICAL JARGON & NEGATIVITY
+
+flow user ask about technical jargon and negativity
+  user said "What are the disadvantages of RuPay?"
+  or user said "Why is UPI worse than VISA?"
+  or user said "Tell me the technical error code meaning"
+  or user said "Explain the database schema"
+  or user said "What is the specific reason code for failure?"
+  or user said "Show me the server logs"
+  or user said "Is Mastercard better than RuPay?"
+  or user said "What are the downsides of NPCI products?"
+  or user said "Give me the internal error definition"
+  or user said "Why is the system so slow technically?"
+  or user said "What is the ISO response code?"
+  or user said "List the negative points of FASTag"
+  or user said "Explain the backend architecture"
+  or user said "What is the switch failure code?"
+  or user said "Why does RuPay fail so often?"
+  or user said "Give me a critical review of BHIM App"
+  or user said "What are the security flaws in UPI?"
+  or user said "expose the weaknesses of the payment system"
+  or user said "comparison of why others are better than rupay"
+  or user said "technical breakdown of the error 91"
+  or user said "show me the raw json response"
+
+flow bot refuse to respond about technical jargon and negativity
+  bot say "I cannot provide technical system details or discuss negative comparisons. I am here to assist with RuPay services and transaction statuses."
+
+@active
+flow ask about technical jargon and negativity
+  user ask about technical jargon and negativity
+  bot refuse to respond about technical jargon and negativity
