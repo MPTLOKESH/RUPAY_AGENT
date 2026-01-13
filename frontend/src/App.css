@@ -683,9 +683,15 @@ body {
     max-width: 70%;
     padding: 1rem 1.25rem;
     border-radius: var(--radius-lg);
-    font-size: 0.95rem;
-    line-height: 1.6;
+    font-size: 1rem;
+    /* Increased from 0.95rem */
+    line-height: 1.7;
+    /* Increased from 1.6 */
     box-shadow: var(--shadow-sm);
+    /* Prevent overflow */
+    overflow-wrap: break-word;
+    word-break: break-word;
+    min-width: 0;
 }
 
 .message.assistant .message-content {
@@ -705,26 +711,108 @@ body {
 
 /* Markdown Styling Fixes */
 .message-text p {
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.75rem;
+    /* Increased spacing between paragraphs */
 }
 
 .message-text p:last-child {
     margin-bottom: 0;
 }
 
-.message-text ul,
+.message-text ul {
+    margin: 0.75rem 0;
+    padding-left: 1.8rem;
+    list-style-type: disc;
+    /* Force visible bullets */
+}
+
 .message-text ol {
-    margin: 0.5rem 0;
-    padding-left: 1.5rem;
+    margin: 0.75rem 0;
+    padding-left: 1.8rem;
+    list-style-type: decimal;
+    /* Force visible numbers */
 }
 
 .message-text li {
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.5rem;
+    padding-left: 0.2rem;
+    /* Slight gap from bullet */
+    display: list-item;
+    /* Ensure it behaves as a list item */
 }
 
 .message-text strong {
     font-weight: 600;
     color: inherit;
+}
+
+/* Table Styling */
+.message-text table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.75rem 0;
+    font-size: 0.85rem;
+    /* Reduced font size as requested */
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 4px;
+    overflow: hidden;
+    table-layout: fixed;
+    /* Ensures equal distribution or respects widths */
+}
+
+.message-text th,
+.message-text td {
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border-color);
+    text-align: left;
+    word-break: normal;
+    /* VITAL: Stops "Transacti-on" breaking */
+    overflow-wrap: normal;
+    vertical-align: top;
+}
+
+.message-text th {
+    background-color: rgba(0, 0, 0, 0.05);
+    font-weight: 600;
+    white-space: nowrap;
+    /* Keep headers on one line if possible */
+}
+
+[data-theme='dark'] .message-text table {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+[data-theme='dark'] .message-text th {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.message-text pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-x: auto;
+    max-width: 100%;
+    background: rgba(0, 0, 0, 0.05);
+    padding: 0.75rem;
+    border-radius: 6px;
+    margin: 0.5rem 0;
+    font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+    font-size: 0.85rem;
+}
+
+[data-theme='dark'] .message-text pre {
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.message-text code {
+    font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+    font-size: 0.9em;
+    background: rgba(0, 0, 0, 0.05);
+    padding: 0.2em 0.4em;
+    border-radius: 4px;
+}
+
+[data-theme='dark'] .message-text code {
+    background: rgba(255, 255, 255, 0.1);
 }
 
 /* Chat Input */

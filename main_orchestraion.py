@@ -67,7 +67,57 @@ class MainOrchestrator:
         # 3. Generate Smart Prompt (In-Context Learning)
         # Pass loaded guardrails to dynamic prompt
         self.system_prompt = get_orchestrator_prompt(TRAIN_FILE, self.guardrail_data)
+        self.system_prompt = get_orchestrator_prompt(TRAIN_FILE, self.guardrail_data)
         print("[Main] System Prompt Loaded with RuPay Context.")
+
+    def _rephrase_query(self, query, history=None):
+        """
+        Helper to rephrase a query that maybe caused an error.
+        Uses a simple, direct prompt to sanitize the input, using history for context.
+        """
+        try:
+            print(f"[Main] Attempting to rephrase query: {query}")
+            
+            # Build context string from history
+            context_str = ""
+            if history:
+                 # Take last 3 exchanges for context
+                recent_history = history[-6:] if len(history) > 6 else history
+                for msg in recent_history:
+                    role = msg.get("role", "user")
+                    content = msg.get("content", "")
+                    context_str += f"{role}: {content}\n"
+            
+            prompt_content = (
+                "You are an expert AI assistant. Your task is to REWRITE the user's last query to be "
+                "clear, self-contained, and professional. \n"
+                "RESOLVE AMBIGUITIES: If the user says 'check it' or 'why failed', use the CONTEXT to replace 'it' with the actual subject (e.g., 'Check the transaction of 500').\n"
+                "CONTEXT:\n"
+                f"{context_str}\n" # Insert context here
+                "USER'S LAST QUERY:\n"
+                f"{query}\n"
+                "OUTPUT ONLY THE REWRITTEN QUERY. NO EXTRA TEXT."
+            )
+
+            rephrase_messages = [
+                SystemMessage(content=prompt_content),
+            ]
+            
+            # We don't need to append the user query again as HumanMessage because it's in the prompt
+            # But sticking to standard chat structure is often safer for some models, 
+            # however, for strict rewriting, the instruction block above is better.
+            # Let's use a simple single message approach for the rephraser to avoid confusion.
+            
+            response = self.llm.invoke(rephrase_messages)
+            new_query = response.content.strip()
+            
+            # Remove quotes if present
+            if new_query.startswith('"') and new_query.endswith('"'):
+                new_query = new_query[1:-1]
+            return new_query
+        except Exception as e:
+            print(f"[Main] Rephrase failed: {e}")
+            return query # Fallback to original
 
     def chat(self, user_query, history=None):
         # --- GUARDRAIL PRE-CHECK ---
@@ -87,64 +137,101 @@ class MainOrchestrator:
         print(f"[Main] ✓ Guardrail check passed")
         
         # --- PREPARE MESSAGES WITH MEMORY ---
-        messages = [SystemMessage(content=self.system_prompt)]
+        # We will attempt up to 2 times: 1st with original, 2nd with rephrased
         
-        # Add Conversation History (Deep Context)
-        if history:
-            for msg in history:
-                role = msg.get("role")
-                content = msg.get("content")
-                if role == "user":
-                    messages.append(HumanMessage(content=content))
-                elif role == "assistant":
-                    messages.append(AIMessage(content=content))
+        current_query = user_query
+        content = None
         
-        # Add Current Query
-        messages.append(HumanMessage(content=user_query))
-        
-        print(f"\nUser: {user_query}")
-        
-        # --- STEP 1: LLM Decides Strategy ---
-        try:
-            response = self.llm.invoke(messages)
-            content = response.content
-            
-            # Clean up Markdown if present (e.g., ```json ... ```)
-            if "```" in content:
-                content = content.replace("```json", "").replace("```", "").strip()
-            
-        except Exception as e:
-            error_msg = str(e).lower()
-            print(f"[ERROR] LLM Invoke failed: {str(e)}")
-            
-            # Smart fallback routing based on query content
-            query_lower = user_query.lower()
-            
-            # Check for common patterns and route appropriately
-            if any(word in query_lower for word in ['upi', 'nach', 'imps', 'rtgs', 'neft', 'visa', 'mastercard']):
-                # Non-RuPay transaction
-                return "Sorry, I can only help with RuPay, RuPay transactions, and NPCI-related questions."
-            
-            elif any(word in query_lower for word in ['transaction', 'failed', 'txn', 'payment', 'withdrawal', 'deposit']):
-                # Likely transaction query - ask for details
-                return "I can help you check your failed transaction. Please provide: date, amount, card last 4 digits, and approximate time."
-            
-            elif any(word in query_lower for word in ['what', 'how', 'when', 'why', 'benefit', 'limit', 'card', 'rupay']):
-                # Likely general question - route to RAG
-                try:
-                    worker_result = self.rag_worker.execute({"query": user_query})
-                    # Parse RAG response
-                    rag_data = json.loads(worker_result)
-                    if rag_data.get('answer'):
-                        return rag_data['answer']
-                    elif rag_data.get('chunks'):
-                        return rag_data['chunks'][0] if rag_data['chunks'] else "I couldn't find specific information about that."
-                except:
-                    return "I'm experiencing technical difficulties. Could you rephrase your question?"
-            
-            else:
-                # Generic fallback
-                return "Sorry, I can only help with RuPay, RuPay transactions, and NPCI-related questions."
+        for attempt in range(2): # Reverted to 2 attempts as per standard logic
+            try:
+                # Re-build messages for each attempt (to include potentially new query)
+                messages = [SystemMessage(content=self.system_prompt)]
+                
+                # Add Conversation History (Deep Context)
+                if history:
+                    for msg in history:
+                        role = msg.get("role")
+                        msg_content = msg.get("content")
+                        if role == "user":
+                            messages.append(HumanMessage(content=msg_content))
+                        elif role == "assistant":
+                            messages.append(AIMessage(content=msg_content))
+                        elif role == "system":
+                            # New: Ingest hidden context/data
+                            messages.append(SystemMessage(content=f"[Previous Context/Data]: {msg_content}"))
+                
+                # Add Current Query
+                messages.append(HumanMessage(content=current_query))
+                
+                print(f"\nUser (Attempt {attempt+1}): {current_query}")
+                
+                # --- STEP 1: LLM Decides Strategy ---
+                response = self.llm.invoke(messages)
+                content = response.content
+                
+                # Clean up Markdown if present (e.g., ```json ... ```)
+                if "```" in content:
+                    content = content.replace("```json", "").replace("```", "").strip()
+                
+                # If we got here, success!
+                break
+                
+            except Exception as e:
+                error_msg = str(e).lower()
+                print(f"[ERROR] LLM Invoke failed (Attempt {attempt+1}): {str(e)}")
+                
+                # If this was the first attempt, try to rephrase and retry
+                if attempt == 0:
+                    print("[Main] Retrying with rephrased query...")
+                    try:
+                        # PASS HISTORY to rephrase logic
+                        rephrased_start = self._rephrase_query(current_query, history)
+                        if rephrased_start and rephrased_start != current_query:
+                            current_query = rephrased_start
+                            print(f"[Main] Rephrased to: {current_query}")
+                            continue
+                    except:
+                        pass # If rephrase fails, we'll hit the fallback logic below on next loop (or just fall through)
+                    
+                # If we are here, it means we failed the last attempt OR rephrase failed/didn't help
+                # Use standard fallback logic
+                
+                # Handle Connection Errors
+                if "connection error" in error_msg or "connect" in error_msg:
+                     return "I'm having trouble connecting to my AI service right now. Please check your internet or try again later."
+    
+                # If it's the specific "unexpected tokens" error (LLM thinking out loud), ask for clarification
+                if "unexpected tokens" in error_msg or "500" in error_msg:
+                     return "I didn't quite catch that. Could you please rephrase your query?"
+    
+                # Smart fallback routing based on query content
+                query_lower = user_query.lower()
+                
+                # Check for common patterns and route appropriately
+                if any(word in query_lower for word in ['upi', 'nach', 'imps', 'rtgs', 'neft', 'visa', 'mastercard']):
+                    # Non-RuPay transaction
+                    return "Sorry, I can only help with RuPay, RuPay transactions, and NPCI-related questions."
+                
+                elif any(word in query_lower for word in ['transaction', 'failed', 'txn', 'payment', 'withdrawal', 'deposit']):
+                    # Likely transaction query - ask for details
+                    return "I can help you check your failed transaction. Please provide: date, amount, card last 4 digits, and approximate time."
+                
+                elif any(word in query_lower for word in ['what', 'how', 'when', 'why', 'benefit', 'limit', 'card', 'rupay']):
+                    # Likely general question - route to RAG
+                    try:
+                        worker_result = self.rag_worker.execute({"query": user_query})
+                        # Parse RAG response
+                        rag_data = json.loads(worker_result)
+                        if rag_data.get('answer'):
+                            return rag_data['answer']
+                        elif rag_data.get('chunks'):
+                            return rag_data['chunks'][0] if rag_data['chunks'] else "I couldn't find specific information about that."
+                    except:
+                        return "I'm experiencing technical difficulties. Could you rephrase your question?"
+                
+                else:
+                    # Generic fallback
+                    return "Sorry, I can only help with RuPay, RuPay transactions, and NPCI-related questions."
         
         # --- STEP 2: Check for JSON Command ---
         # Robust Strategy: Find first '{' and last '}'
@@ -188,9 +275,11 @@ class MainOrchestrator:
                     # Greetings & Identity
                     msg_type = params.get("type", "greeting")
                     if msg_type == "greeting":
-                        return "Hello! I am your RuPay AI Assistant. I can help you check failed transactions or answer questions about RuPay services."
+                        # Dynamic Greeting: Pass STRICT instruction to Final Synthesis
+                        worker_result = "User Greeting Detected. Look at the 'CURRENT DATE & TIME' provided in the system prompt. You MUST start your response with the correct time-based greeting (e.g., 'Good Morning', 'Good Afternoon', 'Good Evening') based on that time."
                     else:
-                        return "I am an AI agent powered by RuPay. I can verify transaction statuses and assist with general banking queries."
+                        # Dynamic Identity: Pass instruction to Final Synthesis
+                        worker_result = "User asked about your identity. Explain that you are the RuPay AI Agent who helps with transactions, status checks, and general banking queries."
                 
                 elif target == "guardrail_agent":
                     # Guardrails - Return Specific Refusal
@@ -226,7 +315,7 @@ class MainOrchestrator:
                     "   - NEVER expose internal system terms, logs, or identifiers.\n"
 
                     "3. NO TECHNICAL JARGON & NO ERROR CODES (STRICT):\n"
-                    "   - You MUST NOT reveal the 'Response Code', 'Reason Code' (e.g., 91, 52, 00), or 'Error Code' to the user under ANY circumstances.\n"
+                    "   - You MUST NOT reveal the 'Response Code', 'Reason Code', (e.g., 91, 52, 00), or 'Error Code' to the user under ANY circumstances.\n"
                     "   - You MUST NOT explain the technical meaning of these codes (e.g., do not say 'Error 91 means switch is inoperative').\n"
                     "   - Do NOT show database column names like 'tstamp_trans' or 'card_number'.\n"
                     "   - Use ONLY the 'suggested_message' for the explanation. If the user asks for the code, REFUSE politely and say you don't have access to technical codes, only the status.\n"
@@ -282,16 +371,36 @@ class MainOrchestrator:
                     "   - DO NOT list disadvantages, downsides, or comparisons that make NPCI products look inferior.\n"
                     "   - Frame limitations (like transaction limits) as 'security measures' to protect the user.\n"
 
-                    "12. EMAIL AND DOCUMENT DRAFTING:\n"
+                    "12. ANTI-HALLUCINATION & FACT-CHECKING (CRITICAL):\n"
+                    "   - DO NOT invent, guess, or 'create' abbreviations, product names, or entities that are not in the context.\n"
+                    "   - If you do not know what an abbreviation (like 'NBBL', 'NFS') stands for, standardly defined in NPCI context, DO NOT make it up.\n"
+                    "   - If the RAG/Worker output does not define it, simply say you don't have that specific detail.\n"
+                    "   - NEVER expand an acronym unless you are 100% certain it is a real NPCI term.\n"
+
+                    "13. EMAIL AND DOCUMENT DRAFTING:\n"
                     "   - If the user asks to draft an email (e.g., complaint to bank, dispute letter), provide a clear, professional template.\n"
                     "   - Include placeholders like [Date], [Transaction ID], [Bank Name] for the user to fill in.\n"
                     "   - Ensure the tone is formal and polite.\n"
+
+                    "13. FORMATTING (STRICT):\n"
+                    "   - ALWAYS use Markdown lists (bullet points or numbered lists) when presenting multiple items, options, or transactions.\n"
+                    "   - NEVER use inline numbering like '1) item, 2) item'. It is hard to read.\n"
+                    "   - Example Correct:\n"
+                    "     1. Transaction A\n"
+                    "     2. Transaction B\n"
+                    "   - Example Incorrect: 'I found 1) Transaction A and 2) Transaction B'.\n"
                 )
 
 
                 # Build synthesis messages with conversation history for context
+                
+                # Get current time for time-aware responses
+                import datetime
+                current_time_str = datetime.datetime.now().strftime("%A, %d %B %Y, %I:%M %p")
+                
                 synthesis_messages = [
                     SystemMessage(content=(
+                        f"CURRENT DATE & TIME: {current_time_str}\n"
                         "You are a helpful and warm RuPay AI Customer Support Agent. "
                         "Your goal is to answer the user's question based on the provided system data and conversation history. "
                         f"{prompt_instructions}"
@@ -299,8 +408,10 @@ class MainOrchestrator:
                 ]
                 
                 # Add recent conversation history (last 4 messages) for context
+                # Add recent conversation history (last 4 messages) for context
                 if history:
-                    recent_history = history[-4:] if len(history) > 4 else history
+                    # User requested WHOLE history - Removed truncation [-4:]
+                    recent_history = history 
                     for msg in recent_history:
                         role = msg.get("role")
                         content = msg.get("content")
@@ -308,6 +419,9 @@ class MainOrchestrator:
                             synthesis_messages.append(HumanMessage(content=f"[Previous User]: {content}"))
                         elif role == "assistant":
                             synthesis_messages.append(AIMessage(content=f"[Previous Assistant]: {content}"))
+                        elif role == "system":
+                            # New: Ingest hidden context/data
+                            synthesis_messages.append(SystemMessage(content=f"[Previous System Data]: {content}"))
                 
                 # Add current query and worker output
                 synthesis_messages.append(HumanMessage(content=f"Current User Query: {user_query}"))
@@ -320,8 +434,13 @@ class MainOrchestrator:
                 if final_content.strip().startswith("{") and '"target":' in final_content:
                     return "I apologize, but I couldn't process that request correctly. Could you please rephrase?"
 
-                return final_content
-
+                # Return structured response (Text + Data)
+                # Only return 'data' if it's substantial (e.g. SQL results), not general chatter
+                return {
+                    "output": final_content,
+                    "data": worker_result if (target == "tool_agent" or target == "rag_agent") else None
+                }
+ 
             except json.JSONDecodeError:
                 return f"Error: LLM generated invalid JSON.\nRaw output: {content}"
             except Exception as e:

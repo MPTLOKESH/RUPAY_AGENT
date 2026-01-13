@@ -69,12 +69,25 @@ async def chat(request: ChatRequest):
         
         # Get response from the orchestrator
         # Note: orchestrator expects history of previous turns
-        response = orchestrator.chat(request.message, conversation_history)
+        response_payload = orchestrator.chat(request.message, conversation_history)
+        
+        response_text = response_payload
+        system_data = None
+        
+        # Handle Dictionary Return (New Memory Feature)
+        if isinstance(response_payload, dict):
+            response_text = response_payload.get("output", "")
+            system_data = response_payload.get("data")
         
         # Save to Redis if session_id is active
         if request.session_id:
             save_message(request.session_id, "user", request.message)
-            save_message(request.session_id, "assistant", response)
+            
+            # Save Hidden Context (Data) if present
+            if system_data:
+                 save_message(request.session_id, "system", f"Hidden Data: {system_data}")
+            
+            save_message(request.session_id, "assistant", response_text)
             
             # Generate and save title if it doesn't exist
             current_title = get_title(request.session_id)
@@ -85,7 +98,7 @@ async def chat(request: ChatRequest):
                 save_title(request.session_id, new_title)
                 current_title = new_title
 
-        return ChatResponse(response=response, title=current_title)
+        return ChatResponse(response=response_text, title=current_title)
     
     except HTTPException:
         raise
