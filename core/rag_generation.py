@@ -142,6 +142,13 @@ class RAGGeneration:
             # Generate response using LangChain
             response = self.llm.invoke(messages)
             answer = response.content.strip()
+
+            # Clean up HTML tags if present (LLM sometimes ignores instructions)
+            answer = answer.replace("<br>", "\n").replace("<br/>", "\n").replace("<br />", "\n")
+            answer = answer.replace("<b>", "**").replace("</b>", "**")
+            answer = answer.replace("<i>", "*").replace("</i>", "*")
+            answer = answer.replace("<strong>", "**").replace("</strong>", "**")
+            answer = answer.replace("<em>", "*").replace("</em>", "*")
             
             if VERBOSE:
                 print(f"[GENERATION] Generated answer ({len(answer)} chars)")

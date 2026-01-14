@@ -65,6 +65,7 @@ RULES:
 3. Do not use external knowledge or make assumptions
 4. Keep answers concise and factual
 5. Quote relevant parts of the context when appropriate
+6. **FORMATTING**: Use Markdown for headers, lists, and bold text. Do NOT use HTML tags.
 
 CONTEXT:
 {context}
@@ -83,6 +84,7 @@ CONTEXT FROM DOCUMENTS:
 If the context provides relevant information, use it. However, if the context is insufficient or empty, you may use your general knowledge about NPCI, FASTag, UPI infrastructure, payment systems, and related topics to provide a helpful answer.
 
 Keep answers concise, accurate, and factual.
+**FORMATTING**: Use Markdown for headers, lists, and bold text. Do NOT use HTML tags.
 
 QUESTION:
 {question}
